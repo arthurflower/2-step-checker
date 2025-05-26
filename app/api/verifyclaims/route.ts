@@ -88,6 +88,21 @@ export async function POST(req: NextRequest) {
 * Assign one of these verdicts: "GO", "CHECK", "NO GO".
 * Final verdict should normally be the most conservative (NO GO > CHECK > GO), *unless* the 7/10 rule forces a "GO".
 
+**IMPORTANT - Detailed Verification Explanations:**
+* **Reality Check Reason**: Must be 2-3 sentences explaining:
+  - What specific facts or evidence from the sources support or contradict the claim
+  - The consistency of information across multiple sources
+  - Any notable discrepancies or agreements between sources
+  - The overall factual accuracy based on the evidence
+
+* **Reliability Check Reason**: Must be 2-3 sentences explaining:
+  - Whether the claim represents information without distortion or bias
+  - If there's any missing context that changes the meaning
+  - Whether the claim is presented in a misleading way
+  - The completeness and fairness of how the information is stated
+
+Make sure Reality Check focuses on FACTUAL ACCURACY (is it true?) while Reliability Check focuses on PRESENTATION INTEGRITY (is it fairly represented?).
+
 Here are the sources:
 ${exasources.map((source: ExaSource, index: number) => {
   const isOrgDomain = getDomainName(source.url).endsWith('.org');
@@ -108,9 +123,9 @@ Provide your answer STRICTLY as a JSON object:
   "confidence_score": a percentage number (MUST be >= 95 if 7/10 rule applies),
   "two_step_verification": {
     "reality_check": "GO" or "CHECK" or "NO GO",
-    "reality_check_reason": "Brief explanation. If 7/10 rule applied, state 'Verified by a strong majority (7+/10) of credible .org websites.' and mention 1-2 key domains (like '${mostCredibleMentions}'). DO NOT list source numbers.",
+    "reality_check_reason": "Detailed 2-3 sentence explanation focusing on factual accuracy. If 7/10 rule applied, start with 'Verified by a strong majority (7+/10) of credible .org websites including ${mostCredibleMentions}.' then add specific factual details. DO NOT list source numbers.",
     "reliability_check": "GO" or "CHECK" or "NO GO",
-    "reliability_check_reason": "Brief explanation of reliability check verdict. DO NOT list source numbers.",
+    "reliability_check_reason": "Detailed 2-3 sentence explanation focusing on presentation integrity and context. DO NOT list source numbers.",
     "final_verdict": "GO" or "CHECK" or "NO GO"
   }
 }

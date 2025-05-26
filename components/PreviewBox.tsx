@@ -70,9 +70,17 @@ const PreviewBox: React.FC<PreviewBoxProps> = ({ content, claims }) => {
         segments.push(
           <span
             key={`claim-${index}`}
-            className={`cursor-pointer border-b-2 transition-colors ${
-              isTrue ? 'border-green-500 hover:bg-green-50' : 'border-red-500 hover:bg-red-50'
-            } ${selectedClaim === claim ? isTrue ? 'bg-green-50' : 'bg-red-50' : ''}`}
+            className={`cursor-pointer border-b-2 transition-all ${
+              isTrue 
+                ? 'border-green-500 hover:border-green-600 hover:text-green-700' 
+                : 'border-red-500 hover:border-red-600 hover:text-red-700'
+            } ${
+              selectedClaim === claim 
+                ? isTrue 
+                  ? 'bg-green-500/10 text-green-800' 
+                  : 'bg-red-500/10 text-red-800' 
+                : ''
+            }`}
             onClick={() => setSelectedClaim(claim)}
           >
             {claim.original_text}
