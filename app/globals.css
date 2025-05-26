@@ -1,0 +1,261 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- Animations --- */
+@keyframes mesh-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes subtle-glow-pulse {
+  0% { box-shadow: 0 0 6px 0px rgba(100, 255, 218, 0.15); }
+  50% { box-shadow: 0 0 12px 2px rgba(100, 255, 218, 0.25); }
+  100% { box-shadow: 0 0 6px 0px rgba(100, 255, 218, 0.15); }
+}
+
+@keyframes fade-in-subtle {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Base Variables & Styles --- */
+:root {
+  --bg-dark: #0F121A; /* Very dark navy/charcoal */
+  --bg-mid: #1A1F2C;
+  --surface-bg: rgba(30, 35, 45, 0.6); /* Glass surface */
+  --surface-border: rgba(180, 210, 255, 0.1);
+  --surface-hover: rgba(40, 45, 55, 0.7);
+
+  --text-primary: #EAEFFC; /* Off-white, high contrast */
+  --text-secondary: #A0AEC0; /* Lighter grey */
+  --text-muted: #718096;
+
+  --accent-teal: #64FFDA;
+  --accent-lavender: #B794F4;
+  --success: #68D391;
+  --error: #FC8181;
+  --warning: #F6E05E;
+
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  --font-sans: var(--font-abcd-diatype), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: var(--font-reckless), Georgia, 'Times New Roman', serif;
+
+  --transition-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-speed: 0.3s;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.65; /* Increased for readability */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* --- Subtle Mesh Gradient Background --- */
+body::before {
+    content: '';
+    position: fixed; /* Fixed position for non-scrolling bg */
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(310deg,
+        rgba(100, 255, 218, 0.03),
+        rgba(183, 148, 244, 0.05),
+        rgba(30, 35, 45, 0.1),
+        rgba(100, 255, 218, 0.03)
+    );
+    background-size: 400% 400%;
+    animation: mesh-gradient 30s ease infinite;
+    opacity: 0.8;
+    z-index: -2; /* Below everything */
+}
+
+/* --- Typography --- */
+h1 {
+  font-family: var(--font-serif);
+  font-size: 3.5rem; /* Large but balanced */
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text-primary);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+h1 span {
+  font-size: 2.8rem;
+  color: var(--text-secondary);
+  opacity: 0.9;
+  display: block;
+}
+
+h2, h3, h4 {
+  font-weight: 600; /* Strong but not overly bold */
+  color: var(--text-primary);
+  margin-bottom: 0.75em;
+  letter-spacing: -0.02em;
+}
+
+p {
+    color: var(--text-secondary);
+    font-size: 1.05rem; /* Slightly larger base */
+    max-width: 65ch; /* Good line length */
+}
+
+a {
+  color: var(--accent-teal);
+  text-decoration: none;
+  transition: color var(--transition-speed) var(--transition-curve),
+              text-shadow var(--transition-speed) var(--transition-curve);
+}
+a:hover {
+  color: var(--white);
+  text-shadow: 0 0 8px var(--accent-teal);
+}
+
+/* --- Glassmorphic Surfaces --- */
+.bg-white, .bg-gray-50 {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  transition: all 0.4s var(--transition-curve);
+  padding: 1.75rem; /* More padding */
+}
+.bg-white:hover, .bg-gray-50:hover {
+  transform: translateY(-5px);
+  border-color: rgba(100, 255, 218, 0.3);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Textarea --- */
+textarea {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  background: rgba(15, 18, 26, 0.7); /* Darker, less transparent */
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  padding: 1.25rem;
+  transition: all var(--transition-speed) var(--transition-curve);
+  box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.3);
+  resize: none;
+  min-height: 160px !important; /* Ensure min-height */
+}
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 15px 3px rgba(100, 255, 218, 0.15),
+              inset 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+textarea::placeholder { color: var(--text-muted); }
+
+/* --- Buttons --- */
+button {
+  border-radius: var(--radius-md);
+  padding: 0.8rem 1.6rem;
+  font-weight: 600;
+  transition: all var(--transition-speed) var(--transition-curve);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transform: scale(1);
+}
+button:hover:not(:disabled) {
+    transform: scale(1.03) translateY(-2px);
+    filter: brightness(1.1);
+}
+
+/* Primary Button */
+button[type="submit"] {
+  background: var(--accent-teal);
+  color: var(--bg-dark);
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(100, 255, 218, 0.2);
+}
+button[type="submit"]:hover:not(:disabled) {
+  box-shadow: 0 7px 25px rgba(100, 255, 218, 0.3);
+}
+
+/* Secondary Button */
+button.border-gray-300 {
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-muted);
+}
+button.border-gray-300:hover:not(:disabled) {
+    border-color: var(--accent-teal);
+    color: var(--accent-teal);
+    background: rgba(100, 255, 218, 0.05);
+}
+
+/* Share Buttons */
+.flex.flex-col.sm\\:flex-row.justify-center.gap-8 button {
+    background: rgba(40, 45, 55, 0.8);
+    color: var(--text-secondary);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-md);
+}
+.flex.flex-col.sm\\:flex-row.justify-center.gap-8 button:hover {
+    color: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+/* --- Badges --- */
+.bg-green-50, .bg-red-50, .bg-yellow-50, .bg-gray-50,
+.bg-green-100, .bg-red-100 {
+    background: rgba(0, 0, 0, 0.15);
+    border-width: 1px;
+    border-radius: 9999px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+.bg-green-50, .bg-green-100 { border-color: var(--success); color: var(--success) !important; }
+.bg-red-50, .bg-red-100 { border-color: var(--error); color: var(--error) !important; }
+.bg-yellow-50 { border-color: var(--warning); color: var(--warning) !important; }
+.bg-gray-50 { border-color: var(--text-muted); color: var(--text-muted) !important; }
+
+/* Overwrite Tailwind text colors for dark mode */
+.text-gray-900, .text-gray-800, .text-gray-700 { color: var(--text-primary) !important; }
+.text-gray-600 { color: var(--text-secondary) !important; }
+.text-gray-500 { color: var(--text-muted) !important; }
+.text-green-800, .text-green-700 { color: var(--success) !important; }
+.text-red-800, .text-red-700 { color: var(--error) !important; }
+.text-yellow-700 { color: var(--warning) !important; }
+.text-blue-600 { color: var(--accent-teal) !important; }
+
+/* --- Loading Spinner --- */
+.w-12.h-12.border-4.border-gray-200 { border-color: var(--text-muted); opacity: 0.3; }
+.w-12.h-12.border-4.border-gray-800 {
+    border-color: var(--accent-teal);
+    border-top-color: transparent !important;
+    animation: spin 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+}
+
+/* --- Animation --- */
+.animate-fade-up {
+  animation: fade-in-subtle 0.8s var(--transition-curve) forwards;
+}
+
+/* --- Custom Scrollbar (Subtle) --- */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background-color: var(--text-muted); border-radius: 10px; border: 2px solid var(--bg-dark); }
+::-webkit-scrollbar-thumb:hover { background-color: var(--accent-teal); }
+
+/* --- Custom Text Selection --- */
+::selection { background: rgba(100, 255, 218, 0.3); color: var(--text-primary); }
+::-moz-selection { background: rgba(100, 255, 218, 0.3); color: var(--text-primary); }
+
+@layer utilities { .text-balance { text-wrap: balance; } }
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
