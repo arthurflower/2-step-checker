@@ -10,6 +10,7 @@ import DocumentSummary from "./DocumentSummary";
 import { ChevronDown, ChevronRight, ChevronUp, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import ShareButtons from "./ui/ShareButtons";
 import { getAssetPath } from "@/lib/utils";
+import { ContentAnalyzer } from "@/lib/contentAnalyzer";
 
 interface Claim {
     claim: string;
@@ -46,6 +47,8 @@ export default function FactChecker() {
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<ProgressUpdate | null>(null);
   const [showProblematicOnly, setShowProblematicOnly] = useState(true);
+  const [contentAnalysis, setContentAnalysis] = useState<any>(null);
+  const [showAnalysisWarning, setShowAnalysisWarning] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Create a ref for the loading or bottom section
@@ -104,7 +107,7 @@ export default function FactChecker() {
     return { problematic, verified };
   }, [factCheckResults]);
 
-  // Extract claims function
+  // Extract claims function with better error handling
   const extractClaims = async (content: string) => {
     const response = await fetch(getAssetPath('/api/extractclaims'), {
       method: 'POST',
@@ -114,13 +117,24 @@ export default function FactChecker() {
       body: JSON.stringify({ content }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to extract claims.');
+      throw new Error(data.error || 'Failed to extract claims.');
     }
 
-    const data = await response.json();
-    return Array.isArray(data.claims) ? data.claims : JSON.parse(data.claims);
+    // Store the analysis data if available
+    if (data.analysis) {
+      setContentAnalysis(data.analysis);
+    }
+
+    // Check if we got valid claims
+    let claims = data.claims;
+    if (!Array.isArray(claims) || claims.length === 0) {
+      throw new Error('No valid claims could be extracted from the content.');
+    }
+
+    return claims;
   };
 
   // SerperSearch function with retry logic
@@ -226,7 +240,7 @@ export default function FactChecker() {
     return results;
   };
 
-  // Fact check function with improved progress tracking
+  // Main fact check function with improved error handling
   const factCheck = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -240,32 +254,51 @@ export default function FactChecker() {
       return;
     }
 
+    // Analyze content before processing
+    const analysis = ContentAnalyzer.analyze(articleContent);
+    setContentAnalysis(analysis);
+
+    // Show warning for large documents
+    if (analysis.wordCount > 10000) {
+      setShowAnalysisWarning(true);
+      setError(`Your document contains ${analysis.wordCount.toLocaleString()} words (approximately ${analysis.estimatedPages} pages). Processing will take approximately ${Math.ceil(analysis.estimatedProcessingTime / 60)} minutes. Consider breaking it into smaller sections for faster results.`);
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
     setFactCheckResults([]);
     setProgress(null);
+    setShowAnalysisWarning(false);
 
     try {
-      // Extract claims
+      // Extract claims with better progress messaging
       setProgress({
         stage: 'extracting',
         current: 0,
         total: 1,
-        message: 'Analyzing content and extracting claims...'
+        message: `Analyzing ${analysis.wordCount.toLocaleString()} words and extracting claims...`
       });
       
       const claims = await extractClaims(articleContent);
+      
+      // Limit claims for very large documents
+      let processableClaims = claims;
+      if (claims.length > 100) {
+        setError(`Found ${claims.length} claims. Processing the first 100 most relevant claims.`);
+        processableClaims = claims.slice(0, 100);
+      }
       
       // Process claims in parallel batches
       setProgress({
         stage: 'searching',
         current: 0,
-        total: claims.length,
-        message: `Verifying ${claims.length} claims...`
+        total: processableClaims.length,
+        message: `Verifying ${processableClaims.length} claims...`
       });
       
       const finalResults = await processBatch(
-        claims,
+        processableClaims,
         3, // Process 3 claims at a time
         (current, total) => {
           setProgress({
@@ -285,11 +318,19 @@ export default function FactChecker() {
         message: 'Analysis complete!'
       });
     } catch (error) {
+      console.error('Fact check error:', error);
       setError(error instanceof Error ? error.message : 'An unexpected error occurred.');
       setFactCheckResults([]);
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // Process anyway function for large documents
+  const processLargeDocument = (e: MouseEvent<HTMLButtonElement>) => {
+    setShowAnalysisWarning(false);
+    setError(null);
+    factCheck(e as any);
   };
 
   // Sample blog content
@@ -348,6 +389,33 @@ export default function FactChecker() {
           </button>
         </form>
 
+        {/* Analysis Warning for Large Documents */}
+        {showAnalysisWarning && contentAnalysis && (
+          <div className="mt-4 mb-10 p-4 bg-yellow-50 border border-yellow-200 rounded-md animate-fade-up w-full">
+            <h3 className="font-semibold text-yellow-800 mb-2 flex items-center">
+              <AlertTriangle className="mr-2" size={20} />
+              Large Document Detected
+            </h3>
+            <div className="text-yellow-700 space-y-1 text-sm">
+              <p>• Words: {contentAnalysis.wordCount.toLocaleString()}</p>
+              <p>• Estimated pages: {contentAnalysis.estimatedPages}</p>
+              <p>• Estimated processing time: {Math.ceil(contentAnalysis.estimatedProcessingTime / 60)} minutes</p>
+              <p>• Strategy: {contentAnalysis.processingStrategy === 'chunked' ? 'Will process in chunks' : 'Direct processing'}</p>
+            </div>
+            <div className="mt-3 space-y-2">
+              <button
+                onClick={processLargeDocument}
+                className="w-full bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition-all"
+              >
+                Process Anyway
+              </button>
+              <p className="text-xs text-yellow-600 text-center">
+                Tip: For faster results, consider processing one chapter at a time
+              </p>
+            </div>
+          </div>
+        )}
+
         {isGenerating && (
           <div ref={loadingRef} className="w-full">
             <LoadingMessages 
@@ -357,7 +425,7 @@ export default function FactChecker() {
           </div>
         )}
 
-        {error && (
+        {error && !showAnalysisWarning && (
           <div className="mt-1 mb-14 p-4 bg-red-50 border border-red-200 animate-fade-up text-red-700 rounded-md">
             {error}
           </div>
