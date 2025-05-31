@@ -1,12 +1,13 @@
+// components/FactChecker.tsx
 "use client";
 
 import Link from "next/link";
-import { useState, FormEvent, useRef, useEffect } from "react";
+import { useState, FormEvent, useRef, useEffect, useMemo } from "react";
 import ClaimsListResults from "./ClaimsListResult";
 import LoadingMessages from "./ui/LoadingMessages";
 import PreviewBox from "./PreviewBox";
 import DocumentSummary from "./DocumentSummary";
-import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import ShareButtons from "./ui/ShareButtons";
 import { getAssetPath } from "@/lib/utils";
 
@@ -30,16 +31,26 @@ type FactCheckResponse = {
   };
 };
 
+// Progress tracking interface
+interface ProgressUpdate {
+  stage: 'extracting' | 'searching' | 'verifying' | 'complete';
+  current: number;
+  total: number;
+  message: string;
+}
+
 export default function FactChecker() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [factCheckResults, setFactCheckResults] = useState<any[]>([]);
   const [articleContent, setArticleContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<ProgressUpdate | null>(null);
+  const [showProblematicOnly, setShowProblematicOnly] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [showAllClaims, setShowAllClaims] = useState(true);
 
   // Create a ref for the loading or bottom section
   const loadingRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   // Function to scroll to the loading section
   const scrollToLoading = () => {
@@ -52,6 +63,15 @@ export default function FactChecker() {
       scrollToLoading();
     }
   }, [isGenerating]);
+
+  // Scroll to results when they're available
+  useEffect(() => {
+    if (factCheckResults.length > 0) {
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [factCheckResults]);
 
   // Function to adjust textarea height
   const adjustTextareaHeight = () => {
@@ -67,6 +87,22 @@ export default function FactChecker() {
   useEffect(() => {
     adjustTextareaHeight();
   }, [articleContent]);
+
+  // Categorize results
+  const categorizedResults = useMemo(() => {
+    const problematic = factCheckResults.filter(
+      result => result.assessment.toLowerCase() === 'false' || 
+      result.two_step_verification?.final_verdict === 'NO GO' ||
+      result.two_step_verification?.final_verdict === 'CHECK'
+    );
+    
+    const verified = factCheckResults.filter(
+      result => result.assessment.toLowerCase() === 'true' && 
+      result.two_step_verification?.final_verdict === 'GO'
+    );
+
+    return { problematic, verified };
+  }, [factCheckResults]);
 
   // Extract claims function
   const extractClaims = async (content: string) => {
@@ -87,25 +123,30 @@ export default function FactChecker() {
     return Array.isArray(data.claims) ? data.claims : JSON.parse(data.claims);
   };
 
-  // SerperSearch function
-  const serperSearch = async (claim: string) => {
-    console.log(`Claim received in serper search: ${claim}`);
+  // SerperSearch function with retry logic
+  const serperSearch = async (claim: string, retries = 2) => {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        const response = await fetch(getAssetPath('/api/exasearch'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ claim }),
+        });
 
-    const response = await fetch(getAssetPath('/api/exasearch'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ claim }),
-    });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch verification for claim.');
+        }
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch verification for claim.');
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        if (i === retries) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+      }
     }
-
-    const data = await response.json();
-    return data;
   };
 
   // Verify claims function
@@ -124,12 +165,68 @@ export default function FactChecker() {
     }
 
     const data = await response.json();
-    console.log("VerifyClaim response:", data.claims);
-
     return data.claims as FactCheckResponse;
   };
 
-  // Fact check function
+  // Batch process claims in parallel
+  const processBatch = async (
+    claims: Claim[], 
+    batchSize: number = 3,
+    onProgress: (current: number, total: number) => void
+  ) => {
+    const results = [];
+    
+    for (let i = 0; i < claims.length; i += batchSize) {
+      const batch = claims.slice(i, i + batchSize);
+      
+      const batchResults = await Promise.all(
+        batch.map(async ({ claim, original_text }) => {
+          try {
+            const searchSources = await serperSearch(claim);
+            
+            if (!searchSources?.results?.length) {
+              return {
+                claim,
+                assessment: "Insufficient Information",
+                summary: "No .org sources found to verify this claim.",
+                fixed_original_text: original_text,
+                confidence_score: 0,
+                original_text,
+                url_sources: [],
+                two_step_verification: {
+                  reality_check: "NO GO",
+                  reality_check_reason: "No .org sources found.",
+                  reliability_check: "NO GO",
+                  reliability_check_reason: "Cannot assess reliability without sources.",
+                  final_verdict: "NO GO",
+                }
+              };
+            }
+
+            const sourceUrls = searchSources.results.map((result: { url: any; }) => result.url);
+            const verifiedClaim = await verifyClaim(claim, original_text, searchSources.results);
+
+            return {
+              ...verifiedClaim,
+              original_text,
+              url_sources: sourceUrls,
+              two_step_verification: verifiedClaim.two_step_verification
+            };
+          } catch (error) {
+            console.error(`Failed to verify claim: ${claim}`, error);
+            return null;
+          }
+        })
+      );
+      
+      results.push(...batchResults.filter(result => result !== null));
+      onProgress(Math.min(i + batchSize, claims.length), claims.length);
+    }
+    
+    return results;
+  };
+
+  // Fact check function with improved progress tracking
   const factCheck = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -146,54 +243,47 @@ export default function FactChecker() {
     setIsGenerating(true);
     setError(null);
     setFactCheckResults([]);
+    setProgress(null);
 
     try {
+      // Extract claims
+      setProgress({
+        stage: 'extracting',
+        current: 0,
+        total: 1,
+        message: 'Analyzing content and extracting claims...'
+      });
+      
       const claims = await extractClaims(articleContent);
-      const finalResults = await Promise.all(
-        claims.map(async ({ claim, original_text }: Claim) => {
-          try {
-            const searchSources = await serperSearch(claim);
-
-            // Check if sources were found; if not, return null or an "Insufficient Info" structure
-            if (!searchSources?.results?.length) {
-              console.warn(`No .org sources found for claim: ${claim}`);
-              // Optionally return a structure indicating insufficient info if needed downstream
-              return {
-                claim,
-                assessment: "Insufficient Information",
-                summary: "No .org sources found to verify this claim.",
-                fixed_original_text: original_text,
-                confidence_score: 0,
-                original_text,
-                url_sources: [],
-                two_step_verification: {
-                    reality_check: "NO GO",
-                    reality_check_reason: "No .org sources found.",
-                    reliability_check: "NO GO",
-                    reliability_check_reason: "Cannot assess reliability without sources.",
-                    final_verdict: "NO GO",
-                }
-              };
-            }
-
-            const sourceUrls = searchSources.results.map((result: { url: any; }) => result.url);
-
-            const verifiedClaim = await verifyClaim(claim, original_text, searchSources.results);
-
-            return {
-              ...verifiedClaim,
-              original_text,
-              url_sources: sourceUrls,
-              two_step_verification: verifiedClaim.two_step_verification
-            };
-          } catch (error) {
-            console.error(`Failed to verify claim: ${claim}`, error);
-            return null; // Or return an error structure
-          }
-        })
+      
+      // Process claims in parallel batches
+      setProgress({
+        stage: 'searching',
+        current: 0,
+        total: claims.length,
+        message: `Verifying ${claims.length} claims...`
+      });
+      
+      const finalResults = await processBatch(
+        claims,
+        3, // Process 3 claims at a time
+        (current, total) => {
+          setProgress({
+            stage: 'verifying',
+            current,
+            total,
+            message: `Verified ${current} of ${total} claims...`
+          });
+        }
       );
 
-      setFactCheckResults(finalResults.filter(result => result !== null));
+      setFactCheckResults(finalResults);
+      setProgress({
+        stage: 'complete',
+        current: finalResults.length,
+        total: finalResults.length,
+        message: 'Analysis complete!'
+      });
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unexpected error occurred.');
       setFactCheckResults([]);
@@ -201,7 +291,6 @@ export default function FactChecker() {
       setIsGenerating(false);
     }
   };
-
 
   // Sample blog content
   const sampleBlog = `The Eiffel Tower, a remarkable iron lattice structure standing proudly in Paris, was originally built as a giant sundial in 1822, intended to cast shadows across the city to mark the hours. Designed by the renowned architect Gustave Eiffel, the tower stands 330 meters tall and once housed the city's first observatory.\n\nWhile it's famously known for hosting over 7 million visitors annually, it was initially disliked by Parisians. Interestingly, the Eiffel Tower was used as to guide ships along the Seine during cloudy nights.`;
@@ -237,6 +326,7 @@ export default function FactChecker() {
 
           <div className="pb-5">
             <button
+              type="button"
               onClick={loadSampleContent}
               disabled={isGenerating}
               className={`px-4 py-2 border-2 border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 hover:border-gray-400 transition-all opacity-0 animate-fade-up [animation-delay:800ms] ${
@@ -259,9 +349,12 @@ export default function FactChecker() {
         </form>
 
         {isGenerating && (
-            <div ref={loadingRef} className="w-full">
-            <LoadingMessages isGenerating={isGenerating} />
-            </div>
+          <div ref={loadingRef} className="w-full">
+            <LoadingMessages 
+              isGenerating={isGenerating} 
+              progress={progress}
+            />
+          </div>
         )}
 
         {error && (
@@ -271,45 +364,95 @@ export default function FactChecker() {
         )}
 
         {factCheckResults.length > 0 && (
-        <div className="space-y-14 mt-5 mb-32">
-            {/* Add Document Summary */}
+          <div ref={resultsRef} className="space-y-14 mt-5 mb-32 w-full">
+            {/* Document Summary */}
             <DocumentSummary results={factCheckResults} />
 
+            {/* Preview Box */}
             <PreviewBox
               content={articleContent}
               claims={factCheckResults}
             />
-            <div className="mt-4 pt-12 opacity-0 animate-fade-up [animation-delay:800ms]">
-                <button
-                onClick={() => setShowAllClaims(!showAllClaims)}
-                className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 font-medium"
-                >
-                {showAllClaims ? (
-                    <>
-                    <span>Hide Detailed Analysis</span>
-                    <ChevronUp size={20} />
-                    </>
-                ) : (
-                    <>
-                    <span>Show Detailed Analysis</span>
-                    <ChevronDown size={20} />
-                    </>
-                )}
-                </button>
 
-                {/* Claims List */}
-                {showAllClaims && (
-                <div>
-                    <ClaimsListResults results={factCheckResults} />
+            {/* Results Section with Toggle */}
+            <div className="mt-4 pt-12 opacity-0 animate-fade-up [animation-delay:800ms]">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-gray-900">
+                  Detailed Analysis
+                </h2>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowProblematicOnly(!showProblematicOnly)}
+                    className={`px-4 py-2 rounded-md font-medium transition-all ${
+                      showProblematicOnly 
+                        ? 'bg-red-100 text-red-700 border border-red-200' 
+                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                    }`}
+                  >
+                    <XCircle size={16} className="inline mr-2" />
+                    Issues Only ({categorizedResults.problematic.length})
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowProblematicOnly(!showProblematicOnly)}
+                    className={`px-4 py-2 rounded-md font-medium transition-all ${
+                      !showProblematicOnly 
+                        ? 'bg-green-100 text-green-700 border border-green-200' 
+                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                    }`}
+                  >
+                    <CheckCircle size={16} className="inline mr-2" />
+                    Show All ({factCheckResults.length})
+                  </button>
                 </div>
-                )}
+              </div>
+
+              {/* Problematic Claims */}
+              {showProblematicOnly && categorizedResults.problematic.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-red-700 mb-4 flex items-center">
+                    <AlertTriangle size={20} className="mr-2" />
+                    Claims Requiring Attention
+                  </h3>
+                  <ClaimsListResults results={categorizedResults.problematic} />
+                </div>
+              )}
+
+              {/* Verified Claims Summary */}
+              {showProblematicOnly && categorizedResults.verified.length > 0 && (
+                <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h3 className="text-lg font-semibold text-green-700 mb-2">
+                    ✓ {categorizedResults.verified.length} Claims Verified
+                  </h3>
+                  <p className="text-green-600">
+                    The following claims were verified and found to be accurate:
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {categorizedResults.verified.slice(0, 3).map((result, idx) => (
+                      <li key={idx} className="text-sm text-green-600">
+                        • {result.claim.substring(0, 80)}...
+                      </li>
+                    ))}
+                    {categorizedResults.verified.length > 3 && (
+                      <li className="text-sm text-green-600 italic">
+                        And {categorizedResults.verified.length - 3} more verified claims
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              {/* All Claims View */}
+              {!showProblematicOnly && (
+                <ClaimsListResults results={factCheckResults} />
+              )}
             </div>
+
             <ShareButtons />
-        </div>
+          </div>
         )}
       </main>
-
-      {/* FOOTER REMOVED */}
     </div>
   );
 }

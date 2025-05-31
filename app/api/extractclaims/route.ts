@@ -1,6 +1,7 @@
 // app/api/extractclaims/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { apiCache } from '@/lib/cacheManager';
 
 // This function can run for a maximum of 60 seconds
 export const maxDuration = 60;
@@ -22,13 +23,25 @@ export async function POST(req: NextRequest) {
   try {
     // Parse request body
     const body = await req.json();
-    const { content } = body;
+    const { content, useCache = true } = body;
 
     if (!content) {
       return NextResponse.json(
         { error: 'Content is required' },
         { status: 400 }
       );
+    }
+
+    // Check cache first
+    if (useCache) {
+      const cachedClaims = apiCache.getClaims(content);
+      if (cachedClaims) {
+        console.log('Returning cached claims');
+        return NextResponse.json({ 
+          claims: cachedClaims,
+          fromCache: true 
+        });
+      }
     }
 
     if (!apiKey) {
@@ -107,7 +120,15 @@ Output the result as valid JSON, strictly adhering to the defined schema. Ensure
       );
     }
 
-    return NextResponse.json({ claims });
+    // Cache the results
+    if (useCache) {
+      apiCache.setClaims(content, claims);
+    }
+
+    return NextResponse.json({ 
+      claims,
+      fromCache: false 
+    });
 
   } catch (error) {
     console.error('Extract claims API error:', error);

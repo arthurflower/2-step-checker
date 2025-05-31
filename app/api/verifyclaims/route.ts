@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export const maxDuration = 60;
+export const maxDuration = 90; // Increased duration
 
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
@@ -14,13 +14,16 @@ const genAI = new GoogleGenerativeAI(apiKey || '');
 interface ExaSource {
   text: string;
   url: string;
+  source_type: 'org' | 'edu_gov' | 'other'; // Ensure this matches exasearch
 }
 
-interface TwoStepVerification {
+interface AdvancedVerification {
   reality_check: "GO" | "CHECK" | "NO GO";
   reality_check_reason: string;
   reliability_check: "GO" | "CHECK" | "NO GO";
   reliability_check_reason: string;
+  contradiction_level: "None" | "Low" | "High";
+  source_quality: "Poor" | "Mixed" | "Good";
   final_verdict: "GO" | "CHECK" | "NO GO";
 }
 
@@ -30,7 +33,7 @@ interface FactCheckResponse {
   summary: string;
   fixed_original_text: string;
   confidence_score: number;
-  two_step_verification: TwoStepVerification;
+  two_step_verification: AdvancedVerification;
 }
 
 const getDomainName = (url: string): string => {
@@ -52,6 +55,12 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+     if (exasources.length === 0) {
+        return NextResponse.json(
+          { error: 'At least one source is required for verification.' },
+          { status: 400 }
+        );
+     }
 
     if (!apiKey) {
       return NextResponse.json(
@@ -62,75 +71,72 @@ export async function POST(req: NextRequest) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const orgSources = exasources
-        .filter((source: ExaSource) => getDomainName(source.url).endsWith('.org'))
-        .map((source: ExaSource) => getDomainName(source.url));
+    const orgSources = exasources.filter((s: ExaSource) => s.source_type === 'org');
+    const eduGovSources = exasources.filter((s: ExaSource) => s.source_type === 'edu_gov');
+    const otherSources = exasources.filter((s: ExaSource) => s.source_type === 'other');
 
-    const mostCredibleMentions = orgSources.length > 0
-        ? ` Key sources include ${orgSources.slice(0, 2).join(' and ')}.`
-        : '';
+    const orgSourceUrls = orgSources.map((s: ExaSource) => getDomainName(s.url));
+    const mostCredibleMentions = orgSourceUrls.length > 0
+        ? ` Key .org sources include ${orgSourceUrls.slice(0, 3).join(', ')}.`
+        : ' No .org sources were found.';
 
-    const prompt = `You are an expert fact-checker following a strict protocol. Given a claim and up to 10 .org sources:
+    const prompt = `You are an expert fact-checker following an ADVANCED protocol. You are given a claim and *up to* 10 sources, categorized by type ('org', 'edu_gov', 'other'). Your analysis MUST strictly adhere to these rules:
 
-**Mandatory Protocol:**
-1.  **Evaluate Each Source**: Determine if each source *individually* supports the claim.
-2.  **Count Supporting Sources**: Count exactly how many of the provided .org sources strongly support the claim.
-3.  **Apply 7/10 Rule**:
-    * **If the count is 7 or more**: You MUST set "assessment" to "True", "reality_check" to "GO", and "confidence_score" to 95 or higher. The "reality_check_reason" MUST state this was based on the 7/10 rule.
-    * **If the count is less than 7**: Proceed with your standard verification logic below.
+**Source Tally (MANDATORY FIRST STEP):**
+1.  Carefully examine EACH source.
+2.  Count *exactly* how many '.org' sources strongly support the claim: [ORG_COUNT]
+3.  Count *exactly* how many '.edu_gov' sources strongly support the claim: [EDU_GOV_COUNT]
+4.  Count *exactly* how many 'other' sources strongly support the claim: [OTHER_COUNT]
+5.  Count *exactly* how many sources *refute* the claim: [REFUTE_COUNT]
 
-**Standard Verification Logic (Only if < 7 sources support):**
-1.  **Reality Check**: Verify if the claim *overall* can be substantiated.
-2.  **Reliability Check**: Confirm if the facts are accurately represented without distortion.
+**Mandatory 7/10 .org Rule:**
+* **If [ORG_COUNT] is 7 or more**: You MUST set "assessment" to "True", "reality_check" to "GO", and "confidence_score" >= 95. The "reality_check_reason" MUST start with: "Verified by a strong majority ([ORG_COUNT}/${exasources.length}) of credible .org websites including ${mostCredibleMentions}."
+* **If [ORG_COUNT] is less than 7**: Proceed to Advanced Logic. DO NOT apply the 7/10 rule.
 
-**General Rules:**
-* Give higher credibility weight to .org domains.
-* Assign one of these verdicts: "GO", "CHECK", "NO GO".
-* Final verdict should normally be the most conservative (NO GO > CHECK > GO), *unless* the 7/10 rule forces a "GO".
+**Advanced Verification Logic (Only if [ORG_COUNT] < 7):**
+1.  **Reality Check**:
+    * Assess accuracy based on *all* sources, heavily weighting .org > .edu_gov > other.
+    * If [REFUTE_COUNT] > 1 OR ([REFUTE_COUNT] >= 1 AND [ORG_COUNT] < 3), MUST be "NO GO".
+    * If [ORG_COUNT] == 0 AND [EDU_GOV_COUNT] == 0 AND [REFUTE_COUNT] == 0, MUST be "CHECK".
+    * Otherwise, make a judgment ("GO", "CHECK", "NO GO").
+    * Determine **Contradiction Level**: Based on supporting vs. refuting sources.
+2.  **Reliability Check**:
+    * Assess neutrality.
+    * Determine **Source Quality**: If ([ORG_COUNT] + [EDU_GOV_COUNT]) < 3, MUST be "Poor" or "Mixed". If [ORG_COUNT] == 0 AND [EDU_GOV_COUNT] == 0, MUST be "Poor".
+    * If Source Quality is "Poor", MUST be "NO GO". If "Mixed", MUST be "CHECK" or "NO GO".
+    * Set **Reliability Check** verdict.
+3.  **Final Verdict**: Most conservative (NO GO > CHECK > GO), unless 7/10 rule applied.
 
-**IMPORTANT - Detailed Verification Explanations:**
-* **Reality Check Reason**: Must be 2-3 sentences explaining:
-  - What specific facts or evidence from the sources support or contradict the claim
-  - The consistency of information across multiple sources
-  - Any notable discrepancies or agreements between sources
-  - The overall factual accuracy based on the evidence
+**IMPORTANT - VERY Detailed Explanations (3-4 sentences, NO source numbers):**
+* **Reality Check Reason**: MUST start with "Based on [ORG_COUNT] .org, [EDU_GOV_COUNT] .edu/gov, and [OTHER_COUNT] other supporting sources vs [REFUTE_COUNT] refuting sources:". MUST explain the weight of evidence, key facts found (mentioning *types* of sources), and the contradiction impact. If no .org sources found, state it explicitly.
+* **Reliability Check Reason**: MUST state the **Source Quality**. MUST explain neutrality/bias assessment, context, and *how the source mix (e.g., 'heavy reliance on non-.org sources (X/10)') impacts the reliability*.
 
-* **Reliability Check Reason**: Must be 2-3 sentences explaining:
-  - Whether the claim represents information without distortion or bias
-  - If there's any missing context that changes the meaning
-  - Whether the claim is presented in a misleading way
-  - The completeness and fairness of how the information is stated
-
-Make sure Reality Check focuses on FACTUAL ACCURACY (is it true?) while Reliability Check focuses on PRESENTATION INTEGRITY (is it fairly represented?).
-
-Here are the sources:
+**Here are the ${exasources.length} sources:**
 ${exasources.map((source: ExaSource, index: number) => {
-  const isOrgDomain = getDomainName(source.url).endsWith('.org');
-  const credibilityNote = isOrgDomain ? ' [HIGH CREDIBILITY - .org domain]' : '';
-  return `Source ${index + 1}${credibilityNote}:\nText: ${source.text}\nURL: ${source.url}\n`;
+  return `Source ${index + 1} [Type: ${source.source_type.toUpperCase()}]:\nText: ${source.text}\nURL: ${source.url}\n`;
 }).join('\n')}
 
-Here is the Original part of the text: ${original_text}
-Here is the claim: ${claim}
+Original text: ${original_text}
+Claim: ${claim}
 
 Provide your answer STRICTLY as a JSON object:
-
 {
   "claim": "${claim}",
   "assessment": "True" or "False" or "Insufficient Information",
-  "summary": "Why is this claim correct and if it isn't correct, then what's correct. In a single concise line.",
-  "fixed_original_text": "If assessment is False, correct the original text; otherwise return it unchanged.",
-  "confidence_score": a percentage number (MUST be >= 95 if 7/10 rule applies),
+  "summary": "Concise summary.",
+  "fixed_original_text": "Fix or original text.",
+  "confidence_score": percentage,
   "two_step_verification": {
     "reality_check": "GO" or "CHECK" or "NO GO",
-    "reality_check_reason": "Detailed 2-3 sentence explanation focusing on factual accuracy. If 7/10 rule applied, start with 'Verified by a strong majority (7+/10) of credible .org websites including ${mostCredibleMentions}.' then add specific factual details. DO NOT list source numbers.",
+    "reality_check_reason": "Detailed 3-4 sentence explanation, MUST start with source counts.",
     "reliability_check": "GO" or "CHECK" or "NO GO",
-    "reliability_check_reason": "Detailed 2-3 sentence explanation focusing on presentation integrity and context. DO NOT list source numbers.",
+    "reliability_check_reason": "Detailed 3-4 sentence explanation, MUST mention Source Quality and source mix impact.",
+    "contradiction_level": "None" or "Low" or "High",
+    "source_quality": "Poor" or "Mixed" or "Good",
     "final_verdict": "GO" or "CHECK" or "NO GO"
   }
 }
-
-Return ONLY the JSON object, no additional text or markdown formatting.`;
+Return ONLY JSON.`;
 
     const result = await model.generateContent(prompt);
     const response = result.response;
