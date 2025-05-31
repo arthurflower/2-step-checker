@@ -4,9 +4,9 @@
 @tailwind utilities;
 
 /* --- Animations --- */
-@keyframes subtle-glow-pulse { 
-  0%, 100% { filter: brightness(1); opacity: 0.9; } 
-  50% { filter: brightness(1.02); opacity: 1; } 
+@keyframes subtle-glow-pulse {
+  0%, 100% { filter: brightness(1); opacity: 0.9; }
+  50% { filter: brightness(1.02); opacity: 1; }
 }
 @keyframes shimmer-subtle {
   0% { background-position: -200% 0; }
@@ -40,11 +40,11 @@
   --bg-dark: #0A0C10;
   --bg-mid: #12151C;
   --bg-light: #1D212B;
-  
+
   --surface-base: rgba(18, 21, 28, 0.7); /* Base for non-glass elements */
   --surface-glass: rgba(22, 25, 35, 0.5); /* Darker, more translucent glass */
   --surface-glass-hover: rgba(26, 30, 40, 0.55); /* Very subtle hover change */
-  --surface-border: rgba(50, 55, 70, 0.25); 
+  --surface-border: rgba(50, 55, 70, 0.25);
   --surface-border-strong: rgba(70, 78, 95, 0.35);
   --surface-highlight: rgba(255, 255, 255, 0.03); /* For subtle highlights on surfaces */
 
@@ -54,16 +54,17 @@
   --text-dim: #3E4553;
 
   --accent-primary: #4F53E8; /* Refined Indigo */
+  --accent-primary-rgb: 79, 83, 232; /* RGB for --accent-primary */
   --accent-secondary: #D93A7C; /* Refined Pink */
   --accent-tertiary: #0BAD7D; /* Refined Emerald */
-  
+
   --success: var(--accent-tertiary);
   --error: #E0314D; /* Refined Rose */
   --warning: #E8920A; /* Refined Amber */
   --info: var(--accent-primary);
 
   --gradient-accent-subtle: linear-gradient(135deg, var(--accent-primary)/70 0%, var(--accent-secondary)/70 100%);
-  
+
   --radius-xs: 3px;
   --radius-sm: 6px;
   --radius-md: 10px; /* Slightly smaller md radius */
@@ -79,6 +80,7 @@
   --transition-duration-shortest: 0.1s;
   --transition-duration-short: 0.2s;
   --transition-duration-medium: 0.35s;
+  --transition-duration-slow: 0.7s; /* <<< ADDED THIS VARIABLE */
 }
 
 * { box-sizing: border-box; scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
@@ -97,9 +99,9 @@ body {
   background-attachment: fixed; /* For fixed background effects */
 }
 
-body::before { 
+body::before {
   content: ""; position: fixed; inset: 0; z-index: -2;
-  background: 
+  background:
     radial-gradient(ellipse at 70% 30%, var(--bg-dark)/80 0%, transparent 50%),
     radial-gradient(ellipse at 30% 70%, var(--bg-mid)/70 0%, transparent 50%),
     var(--bg-darkest);
@@ -122,7 +124,7 @@ body::after { /* Abstract generative pattern - very subtle */
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg);
   box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 0.5px 0px var(--surface-highlight); /* Minimal shadow */
-  transition: background var(--transition-duration-medium) var(--transition-gentle), 
+  transition: background var(--transition-duration-medium) var(--transition-gentle),
               border-color var(--transition-duration-medium) var(--transition-gentle),
               box-shadow var(--transition-duration-medium) var(--transition-gentle);
   position: relative;
@@ -146,8 +148,8 @@ h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 500; color: var(--text-pr
 h3 { font-size: clamp(1.1rem, 2.5vw, 1.4rem); font-weight: 500; color: var(--text-primary); margin-bottom: 0.5em; }
 p, li { color: var(--text-secondary); font-size: 0.875rem; max-width: 66ch; font-weight: 300; } /* Lighter paragraph weight */
 p + p { margin-top: 0.7em; }
-a { 
-  color: var(--accent-primary); text-decoration: none; 
+a {
+  color: var(--accent-primary); text-decoration: none;
   transition: color var(--transition-duration-short) var(--transition-gentle);
   position: relative; /* For pseudo-element underline */
 }
@@ -193,7 +195,7 @@ textarea {
   border-radius: var(--radius-md); color: var(--text-primary); padding: 0.7rem 0.85rem;
   transition: border-color var(--transition-duration-short) var(--transition-gentle),
               background-color var(--transition-duration-short) var(--transition-gentle),
-              box-shadow var(--transition-duration-medium) var(--transition-gentle); 
+              box-shadow var(--transition-duration-medium) var(--transition-gentle);
   width: 100%;
   line-height: 1.7; font-size: 0.875rem; font-weight: 300;
 }
@@ -242,15 +244,15 @@ textarea::placeholder { color: var(--text-muted); opacity: 0.5; font-weight: 300
 }
 
 /* Custom Scrollbar for Source List */
-.custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; } 
+.custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } /* Invisible track */
 .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: var(--radius-xs); }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent-primary)/60; }
 
 
 /* --- Utility & Animation --- */
-.animate-fade-up { 
-  animation: gentle-slide-in var(--transition-duration-slow) var(--transition-gentle) 0.1s forwards;
+.animate-fade-up {
+  animation: gentle-slide-in var(--transition-duration-slow) var(--transition-gentle) forwards; /* <<< UPDATED: removed fixed 0.1s delay */
 }
 .shimmer { /* For loading skeletons */
   background: linear-gradient(90deg, var(--bg-mid) 25%, var(--bg-light) 50%, var(--bg-mid) 75%);
@@ -263,25 +265,20 @@ textarea::placeholder { color: var(--text-muted); opacity: 0.5; font-weight: 300
   outline: 1.5px solid var(--accent-primary)/70; /* Thinner, more subtle */
   outline-offset: 2px;
   border-radius: var(--radius-sm);
-  box-shadow: 0 0 0 2.5px rgba(var(--accent-primary-rgb), 0.1); 
+  box-shadow: 0 0 0 2.5px rgba(var(--accent-primary-rgb), 0.1);
 }
 
 /* --- Selection --- */
-::selection { background: var(--accent-primary)/20; color: var(--text-primary); } 
-
-/* Add :root vars for RGB values of accents if not present, for box-shadows */
-:root {
-  --accent-primary-rgb: 79, 83, 232; /* Updated for --accent-primary: #4F53E8; */
-}
+::selection { background: var(--accent-primary)/20; color: var(--text-primary); }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  h1 { font-size: clamp(1.6rem, 5vw, 2rem); } 
+  h1 { font-size: clamp(1.6rem, 5vw, 2rem); }
   h2 { font-size: clamp(1.25rem, 4vw, 1.7rem); }
   h3 { font-size: clamp(1rem, 3.5vw, 1.15rem); }
-  .summary-card, .claim-card-expanded { padding: 0.7rem 0.9rem; border-radius: var(--radius-md); } 
+  .summary-card, .claim-card-expanded { padding: 0.7rem 0.9rem; border-radius: var(--radius-md); }
   .stat-item { padding: 0.5rem; }
-  .stat-item .text-xl { font-size: 1rem; } 
+  .stat-item .text-xl { font-size: 1rem; }
   .btn-primary, button[type="submit"] { padding: 0.5rem 1rem; font-size:0.8rem; }
   .btn-secondary { padding: 0.4rem 0.8rem; font-size:0.8rem; }
   textarea { font-size: 0.8rem; }
