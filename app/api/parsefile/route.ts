@@ -1,7 +1,7 @@
-// app/api/parsefile/route.ts
+﻿// app/api/parsefile/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import mammoth from 'mammoth';
-import pdf from 'pdf-parse';
+// import pdf from 'pdf-parse'; // Dynamic import below
 import formidable from 'formidable';
 import fs from 'fs';
 
@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
       extractedText = result.value;
     } else if (mimeType === 'application/pdf' || originalFilename.endsWith('.pdf')) {
       const dataBuffer = fs.readFileSync(filePath);
+      const pdf = (await import("pdf-parse")).default;
       const data = await pdf(dataBuffer);
       extractedText = data.text;
     } else if (mimeType === 'text/plain' || originalFilename.endsWith('.txt')) {
@@ -83,3 +84,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Failed to parse file: ${errorMessage}` }, { status: 500 });
   }
 }
+

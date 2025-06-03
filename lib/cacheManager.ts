@@ -1,4 +1,4 @@
-// lib/cacheManager.ts
+﻿// lib/cacheManager.ts
 
 interface CacheEntry<T> {
   data: T;
@@ -18,7 +18,7 @@ class CacheManager {
   }
 
   // Generate cache key
-  private generateKey(prefix: string, data: any): string {
+  public generateKey(prefix: string, data: any): string {
     const dataString = JSON.stringify(data);
     // Simple hash function for consistent keys
     let hash = 0;
@@ -83,12 +83,12 @@ class CacheManager {
     let oldestKey: string | null = null;
     let oldestTimestamp = Infinity;
 
-    for (const [key, entry] of this.cache.entries()) {
+    this.cache.forEach((entry, key) => {
       if (entry.timestamp < oldestTimestamp) {
         oldestTimestamp = entry.timestamp;
         oldestKey = key;
       }
-    }
+    });
 
     return oldestKey;
   }
@@ -96,7 +96,7 @@ class CacheManager {
   // Clear expired entries
   clearExpired(): void {
     const now = Date.now();
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, entry] of Array.from(this.cache.entries())) {
       if (now > entry.expiresAt) {
         this.cache.delete(key);
       }
@@ -131,34 +131,34 @@ const cacheManager = new CacheManager();
 export const apiCache = {
   // Cache extraction results
   setClaims: (content: string, claims: any[]) => {
-    const key = cacheManager.generateKey('claims', content);
+    const key = `claims_${content.substring(0, 50)}_${content.length}`;
     cacheManager.set(key, claims, 10 * 60 * 1000); // 10 minutes
   },
   
   getClaims: (content: string): any[] | null => {
-    const key = cacheManager.generateKey('claims', content);
+    const key = `claims_${content.substring(0, 50)}_${content.length}`;
     return cacheManager.get(key);
   },
 
   // Cache search results
   setSearchResults: (claim: string, results: any) => {
-    const key = cacheManager.generateKey('search', claim);
+    const key = `search_${claim.substring(0, 50)}_${claim.length}`;
     cacheManager.set(key, results, 15 * 60 * 1000); // 15 minutes
   },
   
   getSearchResults: (claim: string): any | null => {
-    const key = cacheManager.generateKey('search', claim);
+    const key = `search_${claim.substring(0, 50)}_${claim.length}`;
     return cacheManager.get(key);
   },
 
   // Cache verification results
   setVerification: (claim: string, sources: any, verification: any) => {
-    const key = cacheManager.generateKey('verify', { claim, sources });
+    const key = `verify_${claim.substring(0, 30)}_${JSON.stringify(sources).length}`;
     cacheManager.set(key, verification, 20 * 60 * 1000); // 20 minutes
   },
   
   getVerification: (claim: string, sources: any): any | null => {
-    const key = cacheManager.generateKey('verify', { claim, sources });
+    const key = `verify_${claim.substring(0, 30)}_${JSON.stringify(sources).length}`;
     return cacheManager.get(key);
   },
 
@@ -168,3 +168,6 @@ export const apiCache = {
 };
 
 export default cacheManager;
+
+
+

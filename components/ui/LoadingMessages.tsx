@@ -1,10 +1,10 @@
-// components/ui/LoadingMessages.tsx
+﻿// components/ui/LoadingMessages.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { CheckCircle, AlertTriangle, Loader2, Zap, Search, FileText, ListChecks } from "lucide-react"; // Added more icons
 
 interface ProgressUpdate {
-  stage: 'idle' | 'analyzing_content' | 'extracting_claims_chunk' | 'extracting_claims_full' | 'searching_sources' | 'verifying_claims' | 'complete' | 'error' | 'parsing_file';
+  stage: 'idle' | 'analyzing_content' | 'extracting_claims_chunk' | 'extracting_claims_full' | 'searching_sources' | 'verifying_claims' | 'complete' | 'error' | 'parsing_file' | 'uploading_file';
   current: number;
   total: number;
   subMessage?: string;
@@ -21,6 +21,7 @@ type LoadingMessagesProps = {
 const stageDetails: Record<ProgressUpdate['stage'], { icon: React.ReactNode; defaultMessage: string }> = {
   idle: { icon: <Loader2 className="animate-spin" />, defaultMessage: "Initializing..." },
   parsing_file: { icon: <FileText />, defaultMessage: "Reading file..." },
+  uploading_file: { icon: <FileText />, defaultMessage: "Uploading file..." },
   analyzing_content: { icon: <Zap />, defaultMessage: "Analyzing content structure..." },
   extracting_claims_chunk: { icon: <ListChecks />, defaultMessage: "Extracting claims from chunks..." },
   extracting_claims_full: { icon: <ListChecks />, defaultMessage: "Extracting all claims..." },
@@ -118,3 +119,5 @@ const LoadingMessages: React.FC<LoadingMessagesProps> = ({ isGenerating, progres
 };
 
 export default LoadingMessages;
+
+

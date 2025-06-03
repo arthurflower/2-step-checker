@@ -1,4 +1,4 @@
-// components/FactChecker.tsx
+﻿// components/FactChecker.tsx
 "use client";
 
 import { useState, FormEvent, useRef, useEffect, useMemo, ChangeEvent } from "react";
@@ -416,7 +416,7 @@ export default function FactChecker() {
     return { results: [] }; 
   };
 
-  const verifyClaimAPI = async (claimData: ExtractedClaim, searchSources: any, docCategory?: string, docTopic?: string): Promise<FactCheckResponse> => { 
+  const verifyClaimAPI = async (claimData: ExtractedClaim, searchSources: any, docCategory: string = "Unknown", docTopic?: string): Promise<FactCheckResponse> => { 
     const response = await fetch(getAssetPath('/api/verifyclaims'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -440,9 +440,9 @@ export default function FactChecker() {
 
   const processBatchInParallel = async (
     claimsToVerify: ExtractedClaim[],
-    docCategory?: string,
-    docTopic?: string,
-    batchSize: number, // Removed default value, making it required
+    batchSize: number, // Required parameter moved before optional ones
+    docCategory: string = "Unknown",
+    docTopic: string = "Unknown", // Removed default value, making it required
     onProgressUpdate: (processedInBatch: number, totalClaims: number) => void
   ): Promise<FactCheckResponse[]> => { 
     const allResults: FactCheckResponse[] = [];
@@ -569,9 +569,8 @@ export default function FactChecker() {
 
       const finalResults = await processBatchInParallel(
         claimsToVerify,
-        extractionResponse.category,
-        extractionResponse.topic,
-        3, // Explicitly passing batchSize
+        3, // batchSize moved to second position
+        extractionResponse.category || "Unknown", extractionResponse.topic || "Unknown", // Explicitly passing batchSize
         (processedCount, totalClaimsInVerification) => { 
           // Progress is set within processBatchInParallel
         }
@@ -668,7 +667,7 @@ export default function FactChecker() {
               <div className="mt-3 text-sm text-text-secondary flex items-center justify-center">
                 <Paperclip size={14} className="mr-2 text-text-muted" />
                 Selected file: <span className="font-medium text-text-primary ml-1">{fileName}</span>
-                {(progress?.stage === 'uploading_file' || progress?.stage === 'parsing_file') && <Server size={14} className="ml-2 text-accent-primary animate-pulse" title="Processing on server"/>}
+                {(progress?.stage === 'uploading_file' || progress?.stage === 'parsing_file') && <Server size={14} className="ml-2 text-accent-primary animate-pulse"/>}
               </div>
             )}
           </div>
@@ -703,13 +702,13 @@ export default function FactChecker() {
               Large Document Warning
             </h3>
             <div className="text-yellow-300/90 space-y-1 text-sm">
-              <p>• Words: {currentAnalysis.wordCount.toLocaleString()}</p>
-              <p>• Sentences: {currentAnalysis.sentenceCount.toLocaleString()}</p>
-              <p>• Estimated processing time: {currentAnalysis.estimatedProcessingTime > 60 ? `~${Math.ceil(currentAnalysis.estimatedProcessingTime / 60)} minutes` : `~${currentAnalysis.estimatedProcessingTime} seconds`}</p>
+              <p>â€¢ Words: {currentAnalysis.wordCount.toLocaleString()}</p>
+              <p>â€¢ Sentences: {currentAnalysis.sentenceCount.toLocaleString()}</p>
+              <p>â€¢ Estimated processing time: {currentAnalysis.estimatedProcessingTime > 60 ? `~${Math.ceil(currentAnalysis.estimatedProcessingTime / 60)} minutes` : `~${currentAnalysis.estimatedProcessingTime} seconds`}</p>
               {currentAnalysis.processingStrategy === 'chunked' &&
-                <p>• Strategy: Document will be processed in {currentAnalysis.chunks?.length || 'multiple'} chunks.</p>
+                <p>â€¢ Strategy: Document will be processed in {currentAnalysis.chunks?.length || 'multiple'} chunks.</p>
               }
-              {currentAnalysis.warnings.filter(w => !w.toLowerCase().includes("estimated processing time") && !w.toLowerCase().includes("multiple chunks")).map((w,i)=><p key={i}>• {w}</p>)}
+              {currentAnalysis.warnings.filter(w => !w.toLowerCase().includes("estimated processing time") && !w.toLowerCase().includes("multiple chunks")).map((w,i)=><p key={i}>â€¢ {w}</p>)}
             </div>
             <div className="mt-4 space-y-2">
               <button
@@ -823,3 +822,9 @@ export default function FactChecker() {
     </div>
   );
 }
+
+
+
+
+
+
