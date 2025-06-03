@@ -1,4 +1,5 @@
 # 🔍 AI Hallucinations Detector
+
 ### Verify Content Accuracy with Real-Time Web Search
 
 ![Screenshot](./public/opengraph-image.jpg)
@@ -34,6 +35,7 @@ Hallucinations Detector is a free and open-source tool that helps you verify the
 <br>
 
 ## 💻 Tech Stack
+
 - **Search API**: [Serper.dev](https://serper.dev) - Google SERP API for reliable search results
 - **Frontend**: [Next.js](https://nextjs.org/docs) with App Router, [TailwindCSS](https://tailwindcss.com), TypeScript
 - **LLM**: [Google's Gemini 1.5 Flash](https://deepmind.google/technologies/gemini/flash/) - Fast and efficient model for content analysis
@@ -44,18 +46,21 @@ Hallucinations Detector is a free and open-source tool that helps you verify the
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - API keys for Serper.dev and Google Gemini
 
 ### Installation
 
 1. Clone the repository
+
 ```bash
 git clone https://github.com/[your-username]/hallucination-detector.git
 cd hallucination-detector
 ```
 
 2. Install dependencies
+
 ```bash
 npm install
 # or
@@ -63,13 +68,15 @@ yarn install
 ```
 
 3. Set up environment variables
-Create a `.env.local` file in the root directory and add your API keys:
+   Create a `.env.local` file in the root directory and add your API keys:
+
 ```
 SERPER_API_KEY=your_serper_api_key
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
 4. Run the development server
+
 ```bash
 npm run dev
 # or
@@ -83,11 +90,13 @@ yarn dev
 ## 🔑 API Keys
 
 ### Serper.dev API
+
 - Sign up at [Serper.dev](https://serper.dev)
 - Free tier includes 2,500 searches per month
 - No credit card required
 
 ### Google Gemini API
+
 - Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 - Free tier includes generous usage limits
 

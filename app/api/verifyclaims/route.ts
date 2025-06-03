@@ -1,21 +1,26 @@
 ﻿// app/api/verifyclaims/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
-import { apiCache } from '@/lib/cacheManager';
-
+import { NextRequest, NextResponse } from "next/server";
+import {
+  GoogleGenerativeAI,
+  HarmCategory,
+  HarmBlockThreshold,
+} from "@google/generative-ai";
+import { apiCache } from "@/lib/cacheManager";
 
 const apiKey = "AIzaSyB-7iuE2qYR_1LK5DALUbBfwnxG7p9tIIs"; // Hardcoded API Key
 
 if (!apiKey) {
-  console.error('GEMINI_API_KEY is not set (this should not happen if hardcoded).');
+  console.error(
+    "GEMINI_API_KEY is not set (this should not happen if hardcoded).",
+  );
 }
 
-const genAI = new GoogleGenerativeAI(apiKey || '');
+const genAI = new GoogleGenerativeAI(apiKey || "");
 
 interface ExaSource {
   text: string;
   url: string;
-  source_type: 'org' | 'edu_gov' | 'other';
+  source_type: "org" | "edu_gov" | "other";
   title?: string;
   publication_date?: string;
 }
@@ -55,7 +60,12 @@ interface MultiDimensionalVerification {
 interface FactCheckResponse {
   claim_id: string;
   claim_text: string;
-  assessment: "True" | "False" | "Ambiguous/Partially True" | "Insufficient Information" | "Needs Specialist Review";
+  assessment:
+    | "True"
+    | "False"
+    | "Ambiguous/Partially True"
+    | "Insufficient Information"
+    | "Needs Specialist Review";
   summary: string;
   fixed_original_text: string;
   multi_dimensional_verification: MultiDimensionalVerification;
@@ -66,87 +76,151 @@ interface FactCheckResponse {
 
 const getDomainName = (url: string): string => {
   try {
-    return new URL(url).hostname.replace('www.', '');
+    return new URL(url).hostname.replace("www.", "");
   } catch (e) {
     return url;
   }
 };
 
-const generateVerificationCacheKey = (claim_id: string, claim_text: string, sources: ExaSource[]): string => {
-  const sourceUrls = sources.map(s => s.url).sort().join(',');
+const generateVerificationCacheKey = (
+  claim_id: string,
+  claim_text: string,
+  sources: ExaSource[],
+): string => {
+  const sourceUrls = sources
+    .map((s) => s.url)
+    .sort()
+    .join(",");
   return `verify_v3_${claim_id}_${claim_text}_${sourceUrls}`; // Cache key version bump
 };
-
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-        claim_id, claim_text, original_sentence, sentence_number,
-        exasources, document_category, document_topic, useCache = true
+      claim_id,
+      claim_text,
+      original_sentence,
+      sentence_number,
+      exasources,
+      document_category,
+      document_topic,
+      useCache = true,
     } = body;
 
-    if (!claim_id || !claim_text || !original_sentence || typeof sentence_number !== 'number' || !exasources || !Array.isArray(exasources)) {
+    if (
+      !claim_id ||
+      !claim_text ||
+      !original_sentence ||
+      typeof sentence_number !== "number" ||
+      !exasources ||
+      !Array.isArray(exasources)
+    ) {
       return NextResponse.json(
-        { error: 'claim_id, claim_text, original_sentence, sentence_number, and an array of exasources are required.' },
-        { status: 400 }
+        {
+          error:
+            "claim_id, claim_text, original_sentence, sentence_number, and an array of exasources are required.",
+        },
+        { status: 400 },
       );
     }
 
-    const defaultNotApplicableCheck: VerificationCheck = { verdict: "N/A", reason: "Not applicable or not assessed." };
-    const defaultErrorCheck: VerificationCheck = { verdict: "NO GO", reason: "Error in processing." };
+    const defaultNotApplicableCheck: VerificationCheck = {
+      verdict: "N/A",
+      reason: "Not applicable or not assessed.",
+    };
+    const defaultErrorCheck: VerificationCheck = {
+      verdict: "NO GO",
+      reason: "Error in processing.",
+    };
 
-     if (exasources.length === 0) {
-        const noSourceResponse: FactCheckResponse = {
-            claim_id, claim_text, assessment: "Insufficient Information",
-            summary: "No sources were provided or found by the search step for this claim, so verification cannot be performed.",
-            fixed_original_text: original_sentence, original_sentence, sentence_number, url_sources_used: [],
-            multi_dimensional_verification: {
-                reality_check: { verdict: "NO GO", reason: "No sources available to check reality.", score: null },
-                reliability_check: { verdict: "NO GO", reason: "No sources available to assess reliability.", score: null },
-                context_coherence_check: defaultNotApplicableCheck, temporal_consistency_check: defaultNotApplicableCheck,
-                cross_reference_validation: defaultNotApplicableCheck, bias_detection_analysis_overall: defaultNotApplicableCheck,
-                confidence_calibration: { verdict: "N/A", reason: "No verification performed.", score: 0 },
-                predictive_accuracy_score_for_claim: defaultNotApplicableCheck,
-                enhanced_source_summary: {
-                    source_authority_score: defaultNotApplicableCheck, source_freshness_index: defaultNotApplicableCheck,
-                    source_bias_detection: defaultNotApplicableCheck, source_consensus_mapping: defaultNotApplicableCheck,
-                },
-                advanced_claim_details: {
-                    claim_complexity_score: defaultNotApplicableCheck, claim_type_classification: defaultNotApplicableCheck,
-                },
-                final_verdict: "NO GO"
-            }
-        };
-        return NextResponse.json({ claims: noSourceResponse });
-     }
+    if (exasources.length === 0) {
+      const noSourceResponse: FactCheckResponse = {
+        claim_id,
+        claim_text,
+        assessment: "Insufficient Information",
+        summary:
+          "No sources were provided or found by the search step for this claim, so verification cannot be performed.",
+        fixed_original_text: original_sentence,
+        original_sentence,
+        sentence_number,
+        url_sources_used: [],
+        multi_dimensional_verification: {
+          reality_check: {
+            verdict: "NO GO",
+            reason: "No sources available to check reality.",
+            score: null,
+          },
+          reliability_check: {
+            verdict: "NO GO",
+            reason: "No sources available to assess reliability.",
+            score: null,
+          },
+          context_coherence_check: defaultNotApplicableCheck,
+          temporal_consistency_check: defaultNotApplicableCheck,
+          cross_reference_validation: defaultNotApplicableCheck,
+          bias_detection_analysis_overall: defaultNotApplicableCheck,
+          confidence_calibration: {
+            verdict: "N/A",
+            reason: "No verification performed.",
+            score: 0,
+          },
+          predictive_accuracy_score_for_claim: defaultNotApplicableCheck,
+          enhanced_source_summary: {
+            source_authority_score: defaultNotApplicableCheck,
+            source_freshness_index: defaultNotApplicableCheck,
+            source_bias_detection: defaultNotApplicableCheck,
+            source_consensus_mapping: defaultNotApplicableCheck,
+          },
+          advanced_claim_details: {
+            claim_complexity_score: defaultNotApplicableCheck,
+            claim_type_classification: defaultNotApplicableCheck,
+          },
+          final_verdict: "NO GO",
+        },
+      };
+      return NextResponse.json({ claims: noSourceResponse });
+    }
 
-    const cacheKey = generateVerificationCacheKey(claim_id, claim_text, exasources);
+    const cacheKey = generateVerificationCacheKey(
+      claim_id,
+      claim_text,
+      exasources,
+    );
     if (useCache) {
       const cachedResult = apiCache.getVerification(cacheKey, {});
       if (cachedResult) {
-        console.log(`Returning cached verification (v3) for claim_id: ${claim_id}`);
+        console.log(
+          `Returning cached verification (v3) for claim_id: ${claim_id}`,
+        );
         return NextResponse.json({ claims: cachedResult, fromCache: true });
       }
     }
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Gemini API key is not configured (verifyclaims).' }, { status: 500 }
+        { error: "Gemini API key is not configured (verifyclaims)." },
+        { status: 500 },
       );
     }
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        generationConfig: {
-            responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: 8192,
-        },
-        safetySettings: [ /* ... safety settings ... */ ],
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.1,
+        maxOutputTokens: 8192,
+      },
+      safetySettings: [
+        /* ... safety settings ... */
+      ],
     });
 
-    const sourcesString = exasources.map((source: ExaSource, index: number) => {
-        return `Source ${index + 1} (Type: ${source.source_type.toUpperCase()}, URL: ${getDomainName(source.url)}, PubDate: ${source.publication_date || 'N/A'}):\nTitle: ${source.title || 'N/A'}\nRelevant Text: "${source.text}"\n`;
-    }).join('\n');
+    const sourcesString = exasources
+      .map((source: ExaSource, index: number) => {
+        return `Source ${index + 1} (Type: ${source.source_type.toUpperCase()}, URL: ${getDomainName(source.url)}, PubDate: ${source.publication_date || "N/A"}):\nTitle: ${source.title || "N/A"}\nRelevant Text: "${source.text}"\n`;
+      })
+      .join("\n");
 
     const prompt = `
 You are an expert fact-checker performing an ADVANCED Multi-Dimensional Verification for a given claim.
@@ -208,12 +282,15 @@ Ensure all string values in JSON are properly escaped. The entire response MUST 
     const text = response.text();
 
     let cleanedText = text.trim();
-    const jsonStart = cleanedText.indexOf('{');
-    const jsonEnd = cleanedText.lastIndexOf('}');
+    const jsonStart = cleanedText.indexOf("{");
+    const jsonEnd = cleanedText.lastIndexOf("}");
 
     if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
-        console.error('Could not find valid JSON object delimiters in response (verifyclaims). Raw text (first 500 chars):', cleanedText.substring(0,500));
-        throw new Error('AI response is not valid JSON.');
+      console.error(
+        "Could not find valid JSON object delimiters in response (verifyclaims). Raw text (first 500 chars):",
+        cleanedText.substring(0, 500),
+      );
+      throw new Error("AI response is not valid JSON.");
     }
     cleanedText = cleanedText.substring(jsonStart, jsonEnd + 1);
 
@@ -221,33 +298,52 @@ Ensure all string values in JSON are properly escaped. The entire response MUST 
     try {
       factCheckResult = JSON.parse(cleanedText);
     } catch (parseError) {
-      console.error('Failed to parse Gemini response as JSON (verifyclaims):', parseError);
-      console.error('Raw response text (cleaned, first 1000 chars):', cleanedText.substring(0, 1000));
-      const errorResponse: FactCheckResponse = { /* ... construct default error response ... */ } as FactCheckResponse; // Truncated for brevity, same as before
-      return NextResponse.json({ claims: errorResponse, fromCache: false, errorDetails: "AI response parsing failed." });
+      console.error(
+        "Failed to parse Gemini response as JSON (verifyclaims):",
+        parseError,
+      );
+      console.error(
+        "Raw response text (cleaned, first 1000 chars):",
+        cleanedText.substring(0, 1000),
+      );
+      const errorResponse: FactCheckResponse = {
+        /* ... construct default error response ... */
+      } as FactCheckResponse; // Truncated for brevity, same as before
+      return NextResponse.json({
+        claims: errorResponse,
+        fromCache: false,
+        errorDetails: "AI response parsing failed.",
+      });
     }
 
     // Ensure url_sources_used is an array, even if AI fails to provide it correctly
     if (!Array.isArray(factCheckResult.url_sources_used)) {
-        console.warn("AI response for 'url_sources_used' was not an array. Defaulting to empty array.");
-        factCheckResult.url_sources_used = [];
+      console.warn(
+        "AI response for 'url_sources_used' was not an array. Defaulting to empty array.",
+      );
+      factCheckResult.url_sources_used = [];
     }
-
 
     if (useCache) {
       apiCache.setVerification(cacheKey, {}, factCheckResult);
     }
 
     return NextResponse.json({ claims: factCheckResult, fromCache: false });
-
   } catch (error) {
-    console.error('Verify claims API error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred during verification.';
-    const fallbackErrorResponse: Partial<FactCheckResponse> = { /* ... construct default error response ... */ } as Partial<FactCheckResponse>; // Truncated for brevity
+    console.error("Verify claims API error:", error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Unknown error occurred during verification.";
+    const fallbackErrorResponse: Partial<FactCheckResponse> = {
+      /* ... construct default error response ... */
+    } as Partial<FactCheckResponse>; // Truncated for brevity
     return NextResponse.json(
-      { claims: fallbackErrorResponse, error: `Failed to verify claims: ${errorMessage}` }, { status: 500 }
+      {
+        claims: fallbackErrorResponse,
+        error: `Failed to verify claims: ${errorMessage}`,
+      },
+      { status: 500 },
     );
   }
 }
-
-

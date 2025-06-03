@@ -24,7 +24,7 @@ class CacheManager {
     let hash = 0;
     for (let i = 0; i < dataString.length; i++) {
       const char = dataString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return `${prefix}_${hash}`;
@@ -44,14 +44,14 @@ class CacheManager {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      expiresAt
+      expiresAt,
     });
   }
 
   // Get cache entry
   get<T>(key: string): T | null {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return null;
     }
@@ -69,12 +69,12 @@ class CacheManager {
   has(key: string): boolean {
     const entry = this.cache.get(key);
     if (!entry) return false;
-    
+
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return false;
     }
-    
+
     return true;
   }
 
@@ -118,8 +118,8 @@ class CacheManager {
         key,
         timestamp: new Date(entry.timestamp).toISOString(),
         expiresAt: new Date(entry.expiresAt).toISOString(),
-        remainingTTL: Math.max(0, entry.expiresAt - Date.now())
-      }))
+        remainingTTL: Math.max(0, entry.expiresAt - Date.now()),
+      })),
     };
   }
 }
@@ -134,7 +134,7 @@ export const apiCache = {
     const key = `claims_${content.substring(0, 50)}_${content.length}`;
     cacheManager.set(key, claims, 10 * 60 * 1000); // 10 minutes
   },
-  
+
   getClaims: (content: string): any[] | null => {
     const key = `claims_${content.substring(0, 50)}_${content.length}`;
     return cacheManager.get(key);
@@ -145,7 +145,7 @@ export const apiCache = {
     const key = `search_${claim.substring(0, 50)}_${claim.length}`;
     cacheManager.set(key, results, 15 * 60 * 1000); // 15 minutes
   },
-  
+
   getSearchResults: (claim: string): any | null => {
     const key = `search_${claim.substring(0, 50)}_${claim.length}`;
     return cacheManager.get(key);
@@ -156,7 +156,7 @@ export const apiCache = {
     const key = `verify_${claim.substring(0, 30)}_${JSON.stringify(sources).length}`;
     cacheManager.set(key, verification, 20 * 60 * 1000); // 20 minutes
   },
-  
+
   getVerification: (claim: string, sources: any): any | null => {
     const key = `verify_${claim.substring(0, 30)}_${JSON.stringify(sources).length}`;
     return cacheManager.get(key);
@@ -164,10 +164,7 @@ export const apiCache = {
 
   // Utility functions
   clearAll: () => cacheManager.clear(),
-  getStats: () => cacheManager.getStats()
+  getStats: () => cacheManager.getStats(),
 };
 
 export default cacheManager;
-
-
-

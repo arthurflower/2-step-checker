@@ -1,8 +1,8 @@
 // components/PreviewBox.tsx
 // This component is currently NOT rendered directly in FactChecker.tsx to avoid redundant text display.
 // It can be repurposed for a more focused sentence-level preview or editing interface if needed.
-import React, { useState, useEffect, useMemo } from 'react';
-import { Copy, CheckCheck, Edit } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from "react";
+import { Copy, CheckCheck, Edit } from "lucide-react";
 
 interface ClaimForPreview {
   claim_id: string;
@@ -24,7 +24,11 @@ interface PreviewBoxProps {
   // onSelectSentence?: (sentenceNumber: number) => void; // Callback when a sentence is clicked
 }
 
-const PreviewBox: React.FC<PreviewBoxProps> = ({ originalContent, claims, onAcceptFix }) => {
+const PreviewBox: React.FC<PreviewBoxProps> = ({
+  originalContent,
+  claims,
+  onAcceptFix,
+}) => {
   const [editableContent, setEditableContent] = useState(originalContent);
   const [copied, setCopied] = useState(false);
 
@@ -39,14 +43,14 @@ const PreviewBox: React.FC<PreviewBoxProps> = ({ originalContent, claims, onAcce
       // A more robust solution would involve splitting `editableContent` into sentences,
       // replacing the target sentence, and rejoining.
       const sentences = editableContent.split(/(?<=[.!?])\s+/); // Basic sentence split
-      if (claim.sentence_number -1 < sentences.length) {
-        sentences[claim.sentence_number -1] = claim.fixed_original_text;
-        setEditableContent(sentences.join(' ')); // Rejoin with spaces, might need refinement
+      if (claim.sentence_number - 1 < sentences.length) {
+        sentences[claim.sentence_number - 1] = claim.fixed_original_text;
+        setEditableContent(sentences.join(" ")); // Rejoin with spaces, might need refinement
       }
       onAcceptFix(claim.claim_id, claim.fixed_original_text);
     }
   };
-  
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(editableContent);
     setCopied(true);
@@ -57,12 +61,18 @@ const PreviewBox: React.FC<PreviewBoxProps> = ({ originalContent, claims, onAcce
   const contentSentences = useMemo(() => {
     if (!editableContent) return [];
     // This basic split might need to be more robust, similar to ContentAnalyzer
-    return editableContent.match(/[^.!?]+[.!?](?=\s+|$|[^A-Z0-9])|[^.!?]+$/g) || [editableContent];
+    return (
+      editableContent.match(/[^.!?]+[.!?](?=\s+|$|[^A-Z0-9])|[^.!?]+$/g) || [
+        editableContent,
+      ]
+    );
   }, [editableContent]);
 
-  const getClaimForSentence = (sentenceIndex: number): ClaimForPreview | undefined => {
+  const getClaimForSentence = (
+    sentenceIndex: number,
+  ): ClaimForPreview | undefined => {
     // Find the first claim associated with this sentence number (1-based index)
-    return claims.find(c => c.sentence_number === sentenceIndex + 1);
+    return claims.find((c) => c.sentence_number === sentenceIndex + 1);
   };
 
   return (
@@ -72,16 +82,16 @@ const PreviewBox: React.FC<PreviewBoxProps> = ({ originalContent, claims, onAcce
           Content Review & Editor
         </h3>
         <button
-            onClick={handleCopy}
-            className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5"
-            aria-label="Copy corrected text"
-          >
-            {copied ? <CheckCheck size={14} /> : <Copy size={14} />}
-            {copied ? 'Copied!' : 'Copy Text'}
+          onClick={handleCopy}
+          className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5"
+          aria-label="Copy corrected text"
+        >
+          {copied ? <CheckCheck size={14} /> : <Copy size={14} />}
+          {copied ? "Copied!" : "Copy Text"}
         </button>
       </div>
-      
-      <div 
+
+      <div
         className="w-full min-h-[250px] max-h-[500px] overflow-y-auto p-4 md:p-6 glass-card leading-relaxed text-text-secondary text-base"
         // `contentEditable` can be used for direct editing, but state management becomes complex.
         // For now, displaying sentences and allowing fixes via buttons is safer.
@@ -96,15 +106,26 @@ const PreviewBox: React.FC<PreviewBoxProps> = ({ originalContent, claims, onAcce
 
           if (claim) {
             title += ` - Claim: "${claim.claim_text}"`;
-            if (claim.two_step_verification?.final_verdict === 'NO GO' || claim.assessment?.toLowerCase() === 'false') {
-              sentenceStyle = "bg-red-500/10 border-b-2 border-red-500/50 cursor-pointer hover:bg-red-500/20";
+            if (
+              claim.two_step_verification?.final_verdict === "NO GO" ||
+              claim.assessment?.toLowerCase() === "false"
+            ) {
+              sentenceStyle =
+                "bg-red-500/10 border-b-2 border-red-500/50 cursor-pointer hover:bg-red-500/20";
               title += " (Incorrect)";
-            } else if (claim.two_step_verification?.final_verdict === 'CHECK' || claim.assessment?.toLowerCase() === 'ambiguous/partially true') {
-              sentenceStyle = "bg-yellow-500/10 border-b-2 border-yellow-500/50 cursor-pointer hover:bg-yellow-500/20";
+            } else if (
+              claim.two_step_verification?.final_verdict === "CHECK" ||
+              claim.assessment?.toLowerCase() === "ambiguous/partially true"
+            ) {
+              sentenceStyle =
+                "bg-yellow-500/10 border-b-2 border-yellow-500/50 cursor-pointer hover:bg-yellow-500/20";
               title += " (Needs Review)";
-            } else if (claim.two_step_verification?.final_verdict === 'GO' || claim.assessment?.toLowerCase() === 'true') {
+            } else if (
+              claim.two_step_verification?.final_verdict === "GO" ||
+              claim.assessment?.toLowerCase() === "true"
+            ) {
               sentenceStyle = "bg-green-500/10 cursor-default";
-               title += " (Verified)";
+              title += " (Verified)";
             }
           }
 
@@ -112,22 +133,26 @@ const PreviewBox: React.FC<PreviewBoxProps> = ({ originalContent, claims, onAcce
             <span key={index} className={sentenceStyle} title={title}>
               {sentence.trim()}
               {/* Add a space after each sentence unless it's the last one */}
-              {index < contentSentences.length - 1 && ' '} 
-              {claim && claim.fixed_original_text && claim.fixed_original_text !== claim.original_sentence && onAcceptFix && (
-                <button 
-                  onClick={() => handleAcceptFix(claim)}
-                  className="ml-1 px-1.5 py-0.5 text-xs bg-accent-primary/20 text-accent-primary hover:bg-accent-primary/30 rounded inline-flex items-center gap-1"
-                  title={`Accept fix for S${claim.sentence_number}`}
-                >
-                  <Edit size={12}/> Accept Fix
-                </button>
-              )}
+              {index < contentSentences.length - 1 && " "}
+              {claim &&
+                claim.fixed_original_text &&
+                claim.fixed_original_text !== claim.original_sentence &&
+                onAcceptFix && (
+                  <button
+                    onClick={() => handleAcceptFix(claim)}
+                    className="ml-1 px-1.5 py-0.5 text-xs bg-accent-primary/20 text-accent-primary hover:bg-accent-primary/30 rounded inline-flex items-center gap-1"
+                    title={`Accept fix for S${claim.sentence_number}`}
+                  >
+                    <Edit size={12} /> Accept Fix
+                  </button>
+                )}
             </span>
           );
         })}
       </div>
       <p className="text-xs text-text-muted text-center">
-        This preview highlights sentences associated with extracted claims. Click on problematic sentences to see details in the analysis section.
+        This preview highlights sentences associated with extracted claims.
+        Click on problematic sentences to see details in the analysis section.
       </p>
     </div>
   );

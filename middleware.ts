@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   // Skip all middleware logic in development
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     return NextResponse.next();
   }
 
@@ -23,9 +23,10 @@ export function middleware(request: NextRequest) {
 
   // The previous complex production logic might be unnecessary if basePath works as expected.
   // For now, let's keep it simple for production and focus on fixing dev.
-  if (request.headers.get('host') === 'exa-hallucination-detector.vercel.app') { // original redirect logic
-    return NextResponse.redirect('https://demo.exa.ai/hallucination-detector', {
-      status: 301
+  if (request.headers.get("host") === "exa-hallucination-detector.vercel.app") {
+    // original redirect logic
+    return NextResponse.redirect("https://demo.exa.ai/hallucination-detector", {
+      status: 301,
     });
   }
 
@@ -34,5 +35,5 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   // Apply middleware to all paths except static files, images, and API routes if they handle basePath themselves
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/).*)'],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/).*)"],
 };

@@ -1,6 +1,6 @@
 // PreviewClaimCard.tsx
-import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import React from "react";
+import { ChevronRight } from "lucide-react";
 
 interface TwoStepVerification {
   reality_check: "GO" | "CHECK" | "NO GO";
@@ -26,33 +26,36 @@ interface PreviewClaimCardProps {
   onAcceptFix: (claim: Claim) => void;
 }
 
-export const PreviewClaimCard: React.FC<PreviewClaimCardProps> = ({ claim, onAcceptFix }) => {
-  const isTrue = claim.assessment.toLowerCase().includes('true');
+export const PreviewClaimCard: React.FC<PreviewClaimCardProps> = ({
+  claim,
+  onAcceptFix,
+}) => {
+  const isTrue = claim.assessment.toLowerCase().includes("true");
   const hasFix = claim.fixed_original_text !== claim.original_text;
 
   const getVerificationEmoji = (verdict: string) => {
     switch (verdict) {
-      case 'GO':
-        return '✅';
-      case 'CHECK':
-        return '⚠️';
-      case 'NO GO':
-        return '❌';
+      case "GO":
+        return "✅";
+      case "CHECK":
+        return "⚠️";
+      case "NO GO":
+        return "❌";
       default:
-        return '❓';
+        return "❓";
     }
   };
 
   const getVerificationStyle = (verdict: string) => {
     switch (verdict) {
-      case 'GO':
-        return 'text-green-700 bg-green-50 border-green-200';
-      case 'CHECK':
-        return 'text-yellow-700 bg-yellow-50 border-yellow-200';
-      case 'NO GO':
-        return 'text-red-700 bg-red-50 border-red-200';
+      case "GO":
+        return "text-green-700 bg-green-50 border-green-200";
+      case "CHECK":
+        return "text-yellow-700 bg-yellow-50 border-yellow-200";
+      case "NO GO":
+        return "text-red-700 bg-red-50 border-red-200";
       default:
-        return 'text-gray-700 bg-gray-50 border-gray-200';
+        return "text-gray-700 bg-gray-50 border-gray-200";
     }
   };
 
@@ -64,12 +67,12 @@ export const PreviewClaimCard: React.FC<PreviewClaimCardProps> = ({ claim, onAcc
         <span
           className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${
             isTrue
-              ? 'bg-green-100 text-green-800 border border-green-200'
-              : 'bg-red-100 text-red-800 border border-red-200'
+              ? "bg-green-100 text-green-800 border border-green-200"
+              : "bg-red-100 text-red-800 border border-red-200"
           }`}
         >
-          <span className="mr-2">{isTrue ? '✅' : '❌'}</span>
-          {isTrue ? 'Supported' : 'Refuted'}
+          <span className="mr-2">{isTrue ? "✅" : "❌"}</span>
+          {isTrue ? "Supported" : "Refuted"}
         </span>
         <span className="text-gray-600 text-sm">
           {claim.confidence_score}% Confident
@@ -80,14 +83,25 @@ export const PreviewClaimCard: React.FC<PreviewClaimCardProps> = ({ claim, onAcc
       {claim.two_step_verification && (
         <div className="bg-gray-50 p-3 rounded-lg space-y-2">
           <div className="flex items-center justify-between">
-            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getVerificationStyle(claim.two_step_verification.reality_check)}`}>
-              {getVerificationEmoji(claim.two_step_verification.reality_check)} Reality
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getVerificationStyle(claim.two_step_verification.reality_check)}`}
+            >
+              {getVerificationEmoji(claim.two_step_verification.reality_check)}{" "}
+              Reality
             </span>
-            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getVerificationStyle(claim.two_step_verification.reliability_check)}`}>
-              {getVerificationEmoji(claim.two_step_verification.reliability_check)} Reliability
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getVerificationStyle(claim.two_step_verification.reliability_check)}`}
+            >
+              {getVerificationEmoji(
+                claim.two_step_verification.reliability_check,
+              )}{" "}
+              Reliability
             </span>
-            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getVerificationStyle(claim.two_step_verification.final_verdict)}`}>
-              {getVerificationEmoji(claim.two_step_verification.final_verdict)} Final
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getVerificationStyle(claim.two_step_verification.final_verdict)}`}
+            >
+              {getVerificationEmoji(claim.two_step_verification.final_verdict)}{" "}
+              Final
             </span>
           </div>
         </div>
@@ -100,7 +114,7 @@ export const PreviewClaimCard: React.FC<PreviewClaimCardProps> = ({ claim, onAcc
           <ChevronRight size={20} />
           <span className="font-medium">Sources</span>
         </div>
-        
+
         <ul className="space-y-2 pl-6">
           {claim.url_sources && claim.url_sources.length > 0 ? (
             claim.url_sources.slice(0, 2).map((source, idx) => (
@@ -111,7 +125,7 @@ export const PreviewClaimCard: React.FC<PreviewClaimCardProps> = ({ claim, onAcc
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 hover:underline text-sm break-all"
                 >
-                  {new URL(source).hostname.replace('www.', '')}
+                  {new URL(source).hostname.replace("www.", "")}
                 </a>
               </li>
             ))
