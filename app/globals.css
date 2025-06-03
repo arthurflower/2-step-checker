@@ -1,286 +1,287 @@
-/* app/globals.css */
+/* app/globals.css - Quantum Entanglement & Holo-Interface Theme */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* --- Animations --- */
-@keyframes subtle-glow-pulse {
-  0%, 100% { filter: brightness(1); opacity: 0.9; }
-  50% { filter: brightness(1.02); opacity: 1; }
-}
-@keyframes shimmer-subtle {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-@keyframes gentle-slide-in {
-  0% { transform: translateY(10px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
-@keyframes slow-gradient-pan {
-	0% { background-position: 0% 50%; }
-	50% { background-position: 100% 50%; }
-	100% { background-position: 0% 50%; }
-}
-@keyframes very-subtle-rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-@keyframes subtle-border-pulse {
-  0%, 100% { border-color: var(--surface-border); }
-  50% { border-color: var(--surface-border-strong); }
-}
+/* --- Font Imports: Ultra-Modern & Monospace --- */
+@import url('https://fonts.googleapis.com/css2?family=Nova+Mono&family=Exo+2:wght@700;800;900&family=Aldrich&display=swap');
 
-
-/* --- Base Variables & Styles --- */
 :root {
-  --font-primary: 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; /* Using Inter Tight for a modern feel */
-  --font-heading: 'Lexend', 'Inter Tight', var(--font-primary); /* Lexend for headings */
+  /* Core Fonts */
+  --font-primary: 'Nova Mono', ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* Primary data/monospace feel */
+  --font-display: 'Aldrich', sans-serif; /* Sharp, futuristic display */
+  --font-headings: 'Exo 2', sans-serif; /* Bold, impactful headings */
 
-  --bg-darkest: #050608; /* Deeper, almost black */
-  --bg-dark: #0A0C10;
-  --bg-mid: #12151C;
-  --bg-light: #1D212B;
 
-  --surface-base: rgba(18, 21, 28, 0.7); /* Base for non-glass elements */
-  --surface-glass: rgba(22, 25, 35, 0.5); /* Darker, more translucent glass */
-  --surface-glass-hover: rgba(26, 30, 40, 0.55); /* Very subtle hover change */
-  --surface-border: rgba(50, 55, 70, 0.25);
-  --surface-border-strong: rgba(70, 78, 95, 0.35);
-  --surface-highlight: rgba(255, 255, 255, 0.03); /* For subtle highlights on surfaces */
+  /* Quantum Dark Palette */
+  --bg-canvas: #000005; /* Absolute black with a hint of deep blue */
+  --bg-primary: #03010E; /* Darkest structural elements */
+  --bg-secondary: #0A071F; /* Elevated surfaces, cards */
+  --bg-tertiary-alpha: rgba(10, 5, 30, 0.6); /* For translucent layers */
 
-  --text-primary: #DCE0E5; /* Slightly softer primary */
-  --text-secondary: #8B94A3; /* More muted secondary */
-  --text-muted: #5F6A7C;
-  --text-dim: #3E4553;
+  /* Holographic & Entangled Borders/Surfaces */
+  --surface-glass: rgba(10, 5, 30, 0.45); /* Very dark, deep space glass */
+  --surface-glass-hover: rgba(15, 10, 40, 0.6);
+  --surface-border: rgba(170, 100, 255, 0.1); /* Faint quantum purple border */
+  --surface-border-strong: rgba(200, 150, 255, 0.25);
+  --surface-highlight-quantum: rgba(0, 255, 255, 0.1); /* Quantum cyan highlight */
 
-  --accent-primary: #4F53E8; /* Refined Indigo */
-  --accent-primary-rgb: 79, 83, 232; /* RGB for --accent-primary */
-  --accent-secondary: #D93A7C; /* Refined Pink */
-  --accent-tertiary: #0BAD7D; /* Refined Emerald */
+  /* Text Colors - Luminous & Sharp */
+  --text-primary: #F0E8FF; /* Bright, slightly cool off-white */
+  --text-secondary: #C0B0F0; /* Luminous lavender */
+  --text-muted: #8070C0;
+  --text-glow-accent: var(--accent-quantum-magenta);
 
-  --success: var(--accent-tertiary);
-  --error: #E0314D; /* Refined Rose */
-  --warning: #E8920A; /* Refined Amber */
-  --info: var(--accent-primary);
+  /* Accent Colors - Quantum Entanglement */
+  --accent-quantum-magenta: #FF00FF;
+  --accent-quantum-magenta-rgb: 255, 0, 255;
+  --accent-laser-cyan: #00FFFF;
+  --accent-laser-cyan-rgb: 0, 255, 255;
+  --accent-positron-yellow: #FFFF00; /* Bright, almost pure yellow */
+  --accent-positron-yellow-rgb: 255, 255, 0;
+  --accent-primary: var(--accent-laser-cyan);
+  --accent-primary-rgb: var(--accent-laser-cyan-rgb);
 
-  --gradient-accent-subtle: linear-gradient(135deg, var(--accent-primary)/70 0%, var(--accent-secondary)/70 100%);
+  /* Semantic Colors */
+  --success: var(--accent-positron-yellow); /* Using yellow for success for a change */
+  --success-rgb: var(--accent-positron-yellow-rgb);
+  --error: #FF2D75; /* Intense neon red-pink */
+  --error-rgb: 255, 45, 117;
+  --warning: #FF8C00; /* Dark, intense orange */
+  --warning-rgb: 255, 140, 0;
+  --info: var(--accent-laser-cyan);
+  --info-rgb: var(--accent-laser-cyan-rgb);
 
-  --radius-xs: 3px;
-  --radius-sm: 6px;
-  --radius-md: 10px; /* Slightly smaller md radius */
-  --radius-lg: 16px; /* Slightly smaller lg radius */
-  --radius-xl: 24px;
+  /* Radii & Blur - Geometric & Refractive */
+  --radius-sharp: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 
-  --blur-sharp: 2px; /* For very subtle depth */
-  --blur-soft: 6px;
-  --blur-medium: 12px;
+  --blur-holo: 8px; /* For holographic depth */
+  --blur-refraction: 4px; /* For slight light bending effects */
 
-  --transition-quick: cubic-bezier(0.2, 0.8, 0.2, 1); /* For fast, smooth transitions */
-  --transition-gentle: cubic-bezier(0.4, 0.0, 0.2, 1);
-  --transition-duration-shortest: 0.1s;
-  --transition-duration-short: 0.2s;
-  --transition-duration-medium: 0.35s;
-  --transition-duration-slow: 0.7s; /* <<< ADDED THIS VARIABLE */
+  /* Transitions & Animations - Snappy & Dynamic */
+  --transition-quantum: cubic-bezier(0.5, 0, 0.1, 1); /* Fast in, slow out */
+  --duration-snap: 100ms;
+  --duration-fast: 200ms;
+  --duration-medium: 400ms;
+  --duration-long: 700ms;
+
+  /* Shadows - Primarily Glows & Light Spills */
+  --shadow-glow-cyan: 0 0 20px rgba(var(--accent-laser-cyan-rgb), 0.5), 0 0 40px rgba(var(--accent-laser-cyan-rgb), 0.3);
+  --shadow-glow-magenta: 0 0 20px rgba(var(--accent-quantum-magenta-rgb), 0.5), 0 0 40px rgba(var(--accent-quantum-magenta-rgb), 0.3);
+  --shadow-glow-yellow: 0 0 20px rgba(var(--accent-positron-yellow-rgb),0.5), 0 0 40px rgba(var(--accent-positron-yellow-rgb),0.3);
+  --shadow-depth-minimal: 0 2px 8px rgba(0,0,0,0.5); /* Minimal physical shadow */
+  --shadow-inset-holo: inset 0 0 10px rgba(var(--surface-highlight-quantum), 0.5);
 }
 
-* { box-sizing: border-box; scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+/* --- Global Resets & Base Styles --- */
+*, *::before, *::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: var(--surface-border); }
+html { -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
 
 body {
-  background-color: var(--bg-darkest);
-  color: var(--text-primary);
   font-family: var(--font-primary);
-  font-weight: 350; /* Slightly lighter base font weight */
-  line-height: 1.7;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
   min-height: 100vh;
   position: relative;
-  overflow-x: hidden;
-  background-attachment: fixed; /* For fixed background effects */
+  overflow: hidden;
+  font-weight: 400;
 }
 
-body::before {
-  content: ""; position: fixed; inset: 0; z-index: -2;
+/* --- Animated Quantum Background --- */
+.quantum-field-background { /* Apply to body or a full-screen wrapper */
+  position: fixed; inset: 0; z-index: -2;
+  overflow: hidden;
+  background: var(--bg-canvas);
+}
+.quantum-field-background::before { /* Particle field */
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(var(--accent-laser-cyan-rgb), 0.1) 0.5px, transparent 0.5px),
+                    radial-gradient(rgba(var(--accent-quantum-magenta-rgb), 0.08) 0.5px, transparent 0.5px);
+  background-size: 20px 20px, 30px 30px;
+  background-position: 0 0, 15px 15px;
+  animation: quantumParticles 20s linear infinite, quantumPulse 5s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes quantumParticles {
+  0% { transform: translate(0,0); }
+  100% { transform: translate(-40px, -40px); } /* Creates illusion of movement */
+}
+@keyframes quantumPulse {
+  0% { opacity: 0.3; } 100% { opacity: 0.7; }
+}
+.quantum-field-background::after { /* Abstract energy waves */
+  content: ''; position: absolute; inset: -50%; /* Larger to allow for movement */
   background:
-    radial-gradient(ellipse at 70% 30%, var(--bg-dark)/80 0%, transparent 50%),
-    radial-gradient(ellipse at 30% 70%, var(--bg-mid)/70 0%, transparent 50%),
-    var(--bg-darkest);
-  background-size: 150% 150%; /* Make gradients larger */
-  animation: slow-gradient-pan 60s ease-in-out infinite alternate; /* Slower, alternating pan */
+    radial-gradient(ellipse at 20% 80%, rgba(var(--accent-primary-rgb), 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 30%, rgba(var(--accent-quantum-magenta-rgb), 0.06) 0%, transparent 50%);
+  animation: energyWaves 60s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite alternate;
+  mix-blend-mode: lighten; /* Experiment with blend modes */
+  will-change: transform, opacity;
 }
-body::after { /* Abstract generative pattern - very subtle */
-    content: ""; position: fixed; inset: 0;
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><defs><filter id="f1" x="0" y="0"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.05" numOctaves="3" result="noise" /><feDiffuseLighting in="noise" lighting-color="%2310121A" surfaceScale="2"><feDistantLight azimuth="45" elevation="60" /></feDiffuseLighting></filter></defs><rect width="100%" height="100%" filter="url(%23f1)" opacity="0.03" /></svg>');
-    background-size: 400px 400px; /* Larger pattern */
-    animation: very-subtle-rotate 240s linear infinite; /* Extremely slow rotation */
-    z-index: -1; pointer-events: none; opacity: 0.5;
+@keyframes energyWaves {
+  0% { transform: translateX(-10%) translateY(5%) rotate(0deg) scale(1); opacity: 0.5; }
+  100% { transform: translateX(10%) translateY(-5%) rotate(15deg) scale(1.2); opacity: 0.8; }
 }
 
-/* --- Glassmorphism & Card Styles --- */
-.summary-card, .claim-card-expanded, .stat-item, .detail-content-box, .verification-step-expanded {
+/* --- Typography Enhancements --- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-headings); color: var(--text-primary);
+  font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(var(--accent-primary-rgb),0.2), 0 0 24px rgba(var(--accent-primary-rgb),0.15);
+  line-height: 1.1;
+}
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); animation: textGlitchLight 8s infinite steps(1); }
+h2 { font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 700; }
+p { font-size: 0.9rem; color: var(--text-secondary); }
+a {
+  color: var(--accent-primary); text-decoration: none; font-weight: normal; /* Monospace is already distinct */
+  transition: all var(--duration-fast) var(--transition-quantum);
+  text-shadow: 0 0 5px rgba(var(--accent-primary-rgb),0.3);
+}
+a:hover {
+  color: var(--accent-positron-yellow);
+  text-shadow: 0 0 15px rgba(var(--accent-positron-yellow-rgb),0.7);
+  filter: brightness(1.3);
+}
+@keyframes textGlitchLight { /* Subtle text glitch for H1 */
+  0%, 100% { opacity: 1; transform: skewX(0); }
+  49% { opacity: 1; transform: skewX(0); }
+  50% { opacity: 0.9; transform: skewX(-0.5deg); text-shadow: 2px 0 var(--accent-quantum-magenta), -2px 0 var(--accent-laser-cyan); }
+  51% { opacity: 1; transform: skewX(0); }
+}
+
+/* --- UI Elements: Holographic & Quantum --- */
+.glass-card { /* Main UI panels */
   background: var(--surface-glass);
-  backdrop-filter: blur(var(--blur-medium)) saturate(120%); /* Reduced saturate for less color shift */
-  -webkit-backdrop-filter: blur(var(--blur-medium)) saturate(120%);
+  backdrop-filter: blur(var(--blur-holo)) saturate(130%) brightness(1.1);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 0.5px 0px var(--surface-highlight); /* Minimal shadow */
-  transition: background var(--transition-duration-medium) var(--transition-gentle),
-              border-color var(--transition-duration-medium) var(--transition-gentle),
-              box-shadow var(--transition-duration-medium) var(--transition-gentle);
+  box-shadow: var(--shadow-depth-minimal), var(--shadow-inset-holo), 0 0 40px -15px rgba(var(--accent-primary-rgb),0.15);
+  padding: 1.5rem 1.75rem;
   position: relative;
-  overflow: hidden; /* Keep for pseudo-elements */
+  overflow: hidden;
+  transition: all var(--duration-medium) var(--transition-quantum);
 }
-/* Minimal hover: only slight border change, no transform */
-.summary-card:hover, .claim-card-expanded:hover {
-  border-color: var(--surface-border-strong); /* Only border changes subtly */
-  background: var(--surface-glass); /* Keep background same unless absolutely needed */
-  box-shadow: 0 1px 4px rgba(0,0,0,0.35), inset 0 0.5px 0px var(--surface-highlight); /* Slightly deeper shadow */
+.glass-card:hover {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-depth-minimal), var(--shadow-inset-holo), var(--shadow-glow-cyan);
+  transform: translateY(-3px) perspective(800px) rotateY(1deg) rotateX(-0.5deg); /* More subtle 3D */
+}
+.glass-card::before { /* Animated holographic edge */
+  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: inherit; pointer-events: none; z-index: 1;
+  border: 2px solid transparent;
+  animation: holoBorderShift 6s ease-in-out infinite alternate;
+  box-shadow: 0 0 10px rgba(var(--accent-laser-cyan-rgb),0.2) inset;
+}
+@keyframes holoBorderShift {
+  0% { border-image: conic-gradient(from 0deg, var(--accent-laser-cyan), var(--accent-quantum-magenta), var(--accent-positron-yellow), var(--accent-laser-cyan)) 1; }
+  50% { border-image: conic-gradient(from 180deg, var(--accent-laser-cyan), var(--accent-quantum-magenta), var(--accent-positron-yellow), var(--accent-laser-cyan)) 1; }
+  100% { border-image: conic-gradient(from 360deg, var(--accent-laser-cyan), var(--accent-quantum-magenta), var(--accent-positron-yellow), var(--accent-laser-cyan)) 1; }
 }
 
-/* --- Typography --- */
-h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); text-rendering: optimizeLegibility; font-weight: 500; }
-h1 {
-  font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 600; letter-spacing: -0.035em;
-  line-height: 1.2; color: var(--text-primary);
-  text-shadow: 0 1px 1px rgba(0,0,0,0.35);
-}
-h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 500; color: var(--text-primary); margin-bottom: 0.7em; }
-h3 { font-size: clamp(1.1rem, 2.5vw, 1.4rem); font-weight: 500; color: var(--text-primary); margin-bottom: 0.5em; }
-p, li { color: var(--text-secondary); font-size: 0.875rem; max-width: 66ch; font-weight: 300; } /* Lighter paragraph weight */
-p + p { margin-top: 0.7em; }
-a {
-  color: var(--accent-primary); text-decoration: none;
-  transition: color var(--transition-duration-short) var(--transition-gentle);
-  position: relative; /* For pseudo-element underline */
-}
-a::after { /* Custom underline effect */
-  content: ''; position: absolute; width: 0; height: 1px;
-  bottom: -2px; left: 0; background-color: var(--accent-primary)/70;
-  transition: width var(--transition-duration-short) var(--transition-gentle);
-}
-a:hover::after { width: 100%; }
-a:hover { color: lighten(var(--accent-primary), 5%); } /* Very subtle color change */
-
-/* --- Buttons --- */
+/* Buttons */
 .btn-primary, button[type="submit"] {
-  background: var(--gradient-accent-subtle); color: white; font-weight: 400; /* Lighter weight */
-  padding: 0.6rem 1.4rem; border-radius: var(--radius-md); border: 1px solid transparent;
-  transition: background-color var(--transition-duration-short) var(--transition-gentle),
-              box-shadow var(--transition-duration-short) var(--transition-gentle);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.25), inset 0 0.5px 0px rgba(255,255,255,0.05);
-  cursor: pointer; text-shadow: 0 0.5px 0.5px rgba(0,0,0,0.2);
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+  background: transparent; color: var(--accent-primary);
+  padding: 0.8rem 1.8rem; border-radius: var(--radius-sharp); /* Very sharp edges */
+  border: 2px solid;
+  border-image-slice: 1;
+  border-image-source: linear-gradient(45deg, var(--accent-primary), var(--accent-quantum-magenta));
+  box-shadow: 0 0 15px -5px rgba(var(--accent-primary-rgb),0.4) inset, 0 0 15px -5px rgba(var(--accent-primary-rgb),0.4);
+  transition: all var(--duration-fast) var(--transition-quantum);
+  position: relative;
 }
-/* Minimal hover: only slight brightness/shadow change */
-.btn-primary:hover, button[type="submit"]:hover:not(:disabled) {
-  filter: brightness(1.03); /* Barely perceptible brightness */
-  box-shadow: 0 1.5px 5px rgba(0,0,0,0.3), inset 0 0.5px 0px rgba(255,255,255,0.03);
+.btn-primary:hover:not(:disabled), button[type="submit"]:hover:not(:disabled) {
+  color: var(--bg-primary);
+  background: linear-gradient(45deg, var(--accent-primary), var(--accent-quantum-magenta));
+  box-shadow: var(--shadow-glow-magenta);
+  transform: scale(1.03) translateY(-1px);
+  animation: buttonPulse 1s infinite alternate;
 }
-.btn-secondary {
-  background: var(--surface-base); color: var(--text-secondary); border: 1px solid var(--surface-border);
-  padding: 0.5rem 1rem; border-radius: var(--radius-md);
-  transition: background-color var(--transition-duration-short) var(--transition-gentle),
-              border-color var(--transition-duration-short) var(--transition-gentle),
-              color var(--transition-duration-short) var(--transition-gentle);
-  font-weight: 400; cursor: pointer;
+@keyframes buttonPulse {
+  0% { box-shadow: var(--shadow-glow-magenta); }
+  100% { box-shadow: 0 0 25px rgba(var(--accent-quantum-magenta-rgb),0.7), 0 0 50px rgba(var(--accent-quantum-magenta-rgb),0.5); }
 }
-/* Minimal hover: only slight border/color change */
-.btn-secondary:hover:not(:disabled) {
-  background: var(--surface-base)/80; border-color: var(--accent-primary)/50; color: var(--accent-primary);
-}
-button:disabled { opacity: 0.5 !important; cursor: not-allowed !important; filter: saturate(0.3) !important; box-shadow: none !important; }
 
-/* --- Inputs --- */
-textarea {
-  background: var(--bg-mid); border: 1px solid var(--surface-border-strong);
-  border-radius: var(--radius-md); color: var(--text-primary); padding: 0.7rem 0.85rem;
-  transition: border-color var(--transition-duration-short) var(--transition-gentle),
-              background-color var(--transition-duration-short) var(--transition-gentle),
-              box-shadow var(--transition-duration-medium) var(--transition-gentle);
-  width: 100%;
-  line-height: 1.7; font-size: 0.875rem; font-weight: 300;
+/* Textarea & Inputs */
+textarea, input[type="text"], input[type="email"], input[type="password"] {
+  font-family: var(--font-primary); /* Using primary for inputs for readability */
+  background: var(--bg-tertiary-alpha);
+  border: 1px solid var(--surface-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  padding: 0.8rem 1rem;
+  caret-color: var(--accent-positron-yellow);
+  box-shadow: var(--shadow-inset-holo);
+  transition: all var(--duration-medium) var(--transition-quantum);
 }
-textarea:focus {
-  outline: none; border-color: var(--accent-primary)/70; background: var(--bg-light);
-  box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.15), 0 0 10px rgba(var(--accent-primary-rgb), 0.05);
+textarea:focus, input[type="text"]:focus {
+  outline: none; border-color: var(--accent-positron-yellow);
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-inset-holo), 0 0 0 2px rgba(var(--accent-positron-yellow-rgb),0.3), var(--shadow-glow-yellow);
 }
-textarea::placeholder { color: var(--text-muted); opacity: 0.5; font-weight: 300; }
 
-/* --- Badges --- */
+/* Badges - Minimalist Data Tags */
 .badge {
-  padding: 0.15rem 0.5rem; border-radius: var(--radius-xs); font-size: 0.65rem; /* Even smaller */
-  font-weight: 500; display: inline-flex; align-items: center; gap: 0.15rem;
-  border: 1px solid; line-height: 1.2; text-transform: uppercase; letter-spacing: 0.04em;
-  background-color: transparent; /* Let border and text define it */
+  font-family: var(--font-mono); text-transform: uppercase;
+  padding: 0.25rem 0.7rem; border-radius: var(--radius-sharp);
+  font-size: 0.7rem; font-weight: 400; letter-spacing: 0.05em;
+  border: 1px solid;
 }
-.badge-success { color: var(--success); border-color: var(--success)/50; }
-.badge-error   { color: var(--error);   border-color: var(--error)/50; }
-.badge-warning { color: var(--warning); border-color: var(--warning)/50; }
-.badge-info    { color: var(--info);    border-color: var(--info)/50; }
+.badge-success { background: rgba(var(--success-rgb),0.1); color: var(--success); border-color: rgba(var(--success-rgb),0.4); }
+/* ... other badge types ... */
 
-/* --- Claim Card Specifics (Always Expanded) --- */
+/* Detail Sections in ClaimsListResult */
 .detail-header {
-  font-size: 0.6rem; font-weight: 500; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: 0.07em;
-  display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.2rem;
-  border-bottom: 1px solid var(--surface-border)/50; padding-bottom: 0.2rem;
+  font-family: var(--font-display); font-weight: 700; font-size: 0.85rem; text-transform: uppercase;
+  color: var(--accent-quantum-magenta);
+  border-bottom: 1px solid rgba(var(--accent-quantum-magenta-rgb),0.2);
+  padding-bottom: 0.5rem; margin-bottom: 0.8rem;
 }
-.detail-content-box {
-  padding: 0.4rem 0.6rem; border-radius: var(--radius-sm);
-  background: var(--bg-dark); /* Darker for contrast */
-  border: 1px solid var(--surface-border)/50;
-  font-size: 0.75rem; font-weight: 300;
+.source-entry { /* Individual source card */
+  background: rgba(var(--bg-secondary), 0.7);
+  border: 1px solid var(--surface-border);
+  border-left: 3px solid; /* Type indicator will use this */
+  border-radius: var(--radius-md);
+  padding: 0.8rem 1rem;
+  transition: all var(--duration-fast) var(--transition-quantum);
+  box-shadow: var(--shadow-depth-minimal);
+}
+.source-entry:hover {
+  border-color: var(--accent-primary);
+  border-left-color: var(--accent-primary);
+  box-shadow: var(--shadow-glow-cyan), var(--shadow-depth-minimal);
+  transform: translateX(3px);
+}
+.source-entry.type-org { border-left-color: var(--accent-laser-cyan); }
+.source-entry.type-edu_gov { border-left-color: var(--accent-positron-yellow); }
+.source-entry.type-other { border-left-color: var(--text-muted); }
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: var(--radius-sharp); }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent-quantum-magenta); }
+
+/* Animations */
+.animate-fade-up { animation: quantum-entry 0.9s var(--transition-quantum) forwards; }
+@keyframes quantum-entry {
+  0% { opacity: 0; transform: translateY(50px) scale(0.8) rotateY(-20deg); filter: blur(5px); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotateY(0deg); filter: blur(0px); }
 }
 
-.source-link {
-  display: flex; align-items: center; gap: 0.35rem;
-  font-size: 0.7rem; color: var(--accent-primary);
-  padding: 0.2rem 0.35rem; border-radius: var(--radius-xs);
-  transition: color var(--transition-duration-shortest) ease-out;
-}
-.source-link:hover { color: lighten(var(--accent-primary),10%); } /* Only color change */
-.source-link-icon {
-  width: 3px; height: 3px; border-radius: 50%; background-color: currentColor; flex-shrink: 0;
-  transition: background-color var(--transition-duration-shortest) ease-out;
-}
-
-/* Custom Scrollbar for Source List */
-.custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; } /* Invisible track */
-.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: var(--radius-xs); }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent-primary)/60; }
-
-
-/* --- Utility & Animation --- */
-.animate-fade-up {
-  animation: gentle-slide-in var(--transition-duration-slow) var(--transition-gentle) forwards; /* <<< UPDATED: removed fixed 0.1s delay */
-}
-.shimmer { /* For loading skeletons */
-  background: linear-gradient(90deg, var(--bg-mid) 25%, var(--bg-light) 50%, var(--bg-mid) 75%);
-  background-size: 200% 100%;
-  animation: shimmer-subtle 1.2s linear infinite;
-}
-
-/* --- Focus Visible --- */
+/* Focus Visible */
 :focus-visible {
-  outline: 1.5px solid var(--accent-primary)/70; /* Thinner, more subtle */
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-  box-shadow: 0 0 0 2.5px rgba(var(--accent-primary-rgb), 0.1);
+  outline: 2px dashed var(--accent-positron-yellow);
+  outline-offset: 3px;
+  box-shadow: 0 0 15px rgba(var(--accent-positron-yellow-rgb),0.7);
 }
+::selection { background: rgba(var(--accent-quantum-magenta-rgb), 0.5); color: var(--text-primary); }
 
-/* --- Selection --- */
-::selection { background: var(--accent-primary)/20; color: var(--text-primary); }
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  h1 { font-size: clamp(1.6rem, 5vw, 2rem); }
-  h2 { font-size: clamp(1.25rem, 4vw, 1.7rem); }
-  h3 { font-size: clamp(1rem, 3.5vw, 1.15rem); }
-  .summary-card, .claim-card-expanded { padding: 0.7rem 0.9rem; border-radius: var(--radius-md); }
-  .stat-item { padding: 0.5rem; }
-  .stat-item .text-xl { font-size: 1rem; }
-  .btn-primary, button[type="submit"] { padding: 0.5rem 1rem; font-size:0.8rem; }
-  .btn-secondary { padding: 0.4rem 0.8rem; font-size:0.8rem; }
-  textarea { font-size: 0.8rem; }
-  p, li { font-size: 0.8rem; }
-}

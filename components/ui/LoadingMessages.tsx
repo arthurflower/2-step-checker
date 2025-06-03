@@ -1,11 +1,16 @@
 // components/ui/LoadingMessages.tsx
+"use client";
 import { useEffect, useState } from "react";
+import { CheckCircle, AlertTriangle, Loader2, Zap, Search, FileText, ListChecks } from "lucide-react"; // Added more icons
 
 interface ProgressUpdate {
-  stage: 'extracting' | 'searching' | 'verifying' | 'complete';
+  stage: 'idle' | 'analyzing_content' | 'extracting_claims_chunk' | 'extracting_claims_full' | 'searching_sources' | 'verifying_claims' | 'complete' | 'error' | 'parsing_file';
   current: number;
   total: number;
+  subMessage?: string;
+  overallProgress?: number; // Percentage 0-100 for the entire operation
   message: string;
+  msRemaining?: number; // Estimated milliseconds remaining
 }
 
 type LoadingMessagesProps = {
@@ -13,105 +18,99 @@ type LoadingMessagesProps = {
   progress?: ProgressUpdate | null;
 };
 
-const loadingMessages = [
-  "Analyzing your content...",
-  "Extracting key claims...",
-  "Searching for reliable sources...",
-  "Verifying claim accuracy...",
-  "Generating results...",
-  "Almost complete..."
-];
+const stageDetails: Record<ProgressUpdate['stage'], { icon: React.ReactNode; defaultMessage: string }> = {
+  idle: { icon: <Loader2 className="animate-spin" />, defaultMessage: "Initializing..." },
+  parsing_file: { icon: <FileText />, defaultMessage: "Reading file..." },
+  analyzing_content: { icon: <Zap />, defaultMessage: "Analyzing content structure..." },
+  extracting_claims_chunk: { icon: <ListChecks />, defaultMessage: "Extracting claims from chunks..." },
+  extracting_claims_full: { icon: <ListChecks />, defaultMessage: "Extracting all claims..." },
+  searching_sources: { icon: <Search />, defaultMessage: "Searching for verification sources..." },
+  verifying_claims: { icon: <CheckCircle />, defaultMessage: "Verifying claims..." },
+  complete: { icon: <CheckCircle className="text-green-500" />, defaultMessage: "Analysis complete!" },
+  error: { icon: <AlertTriangle className="text-red-500" />, defaultMessage: "An error occurred." },
+};
+
 
 const LoadingMessages: React.FC<LoadingMessagesProps> = ({ isGenerating, progress }) => {
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [displayMessage, setDisplayMessage] = useState("Initializing analysis...");
+  const [estimatedTime, setEstimatedTime] = useState<string>("");
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    if (isGenerating && progress) {
+      setDisplayMessage(progress.message);
 
-    if (isGenerating && !progress) {
-      setCurrentMessageIndex(0);
-
-      intervalId = setInterval(() => {
-        setCurrentMessageIndex((prevIndex) => {
-          const nextIndex = prevIndex + 1;
-
-          if (nextIndex < loadingMessages.length) {
-            return nextIndex;
-          } else {
-            clearInterval(intervalId);
-            return prevIndex;
-          }
-        });
-      }, 2000);
-    } else {
-      setCurrentMessageIndex(0);
+      if (progress.msRemaining !== undefined) {
+        const totalSeconds = Math.ceil(progress.msRemaining / 1000);
+        if (totalSeconds > 60) {
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = totalSeconds % 60;
+          setEstimatedTime(`~${minutes}m ${seconds}s remaining`);
+        } else if (totalSeconds > 0) {
+          setEstimatedTime(`~${totalSeconds}s remaining`);
+        } else {
+          setEstimatedTime("");
+        }
+      } else {
+        setEstimatedTime("");
+      }
+    } else if (!isGenerating) {
+      setDisplayMessage("Analysis complete or not started.");
+      setEstimatedTime("");
     }
-
-    return () => clearInterval(intervalId);
   }, [isGenerating, progress]);
 
-  const getProgressPercentage = () => {
-    if (!progress || progress.total === 0) return 0;
-    return Math.round((progress.current / progress.total) * 100);
-  };
+  if (!isGenerating || !progress) {
+    return null; // Don't render anything if not generating or no progress
+  }
 
-  const getStageIcon = (stage: string) => {
-    switch (stage) {
-      case 'extracting':
-        return '🔍';
-      case 'searching':
-        return '🌐';
-      case 'verifying':
-        return '✓';
-      case 'complete':
-        return '✨';
-      default:
-        return '⏳';
-    }
-  };
+  const currentStageInfo = stageDetails[progress.stage] || stageDetails.idle;
+  const overallProgressPercentage = progress.overallProgress !== undefined ? Math.max(0, Math.min(100, progress.overallProgress)) : 0;
+
+  // Determine current/total for stage if available
+  let stageProgressText = "";
+  if (progress.total > 1 && (progress.stage === 'extracting_claims_chunk' || progress.stage === 'searching_sources' || progress.stage === 'verifying_claims')) {
+    stageProgressText = `(${progress.current}/${progress.total})`;
+  }
 
   return (
-    <div className="w-full mt-12 mb-24">
-      <div className="flex flex-col items-center space-y-6">
-        {/* Spinner or Progress */}
-        {!progress ? (
-          <div className="relative">
-            <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-12 h-12 border-4 border-gray-800 rounded-full animate-spin border-t-transparent"></div>
-          </div>
-        ) : (
-          <div className="w-full max-w-md space-y-4">
-            {/* Progress Bar */}
-            <div className="relative">
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-500 ease-out"
-                  style={{ width: `${getProgressPercentage()}%` }}
-                />
-              </div>
-              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-2xl">
-                {getStageIcon(progress.stage)}
-              </div>
-            </div>
-            
-            {/* Progress Stats */}
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>{progress.current} / {progress.total}</span>
-              <span>{getProgressPercentage()}%</span>
-            </div>
-          </div>
-        )}
+    <div className="w-full mt-12 mb-24 opacity-0 animate-fade-up animation-delay-[200ms]">
+      <div className="flex flex-col items-center space-y-5 p-6 bg-surface-glass border border-surface-border-strong rounded-xl shadow-xl">
         
-        {/* Message */}
-        <div className="text-gray-600 text-lg opacity-0 animate-fade-up [animation-delay:200ms] text-center">
-          {progress ? progress.message : (isGenerating ? loadingMessages[currentMessageIndex] : "")}
+        {/* Icon and Main Message */}
+        <div className="flex items-center text-xl font-semibold text-text-primary">
+          <span className="mr-3 text-accent-primary">{currentStageInfo.icon}</span>
+          {displayMessage} {stageProgressText}
         </div>
 
-        {/* Additional Context for Long Operations */}
-        {progress && progress.total > 10 && (
-          <div className="text-sm text-gray-500 text-center max-w-md opacity-0 animate-fade-up [animation-delay:400ms]">
-            Processing multiple claims in parallel for faster results...
-          </div>
+        {/* Overall Progress Bar */}
+        <div className="w-full max-w-md bg-surface-base rounded-full h-3 overflow-hidden border border-surface-border">
+          <div
+            className="h-full bg-gradient-to-r from-accent-primary/70 to-accent-secondary/70 transition-all duration-300 ease-out rounded-full"
+            style={{ width: `${overallProgressPercentage}%` }}
+            aria-valuenow={overallProgressPercentage}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
+        </div>
+        
+        <div className="flex justify-between w-full max-w-md text-xs text-text-muted">
+            <span>Overall Progress: {Math.round(overallProgressPercentage)}%</span>
+            {estimatedTime && <span>{estimatedTime}</span>}
+        </div>
+
+
+        {/* Sub-message / Details */}
+        {progress.subMessage && (
+          <p className="text-sm text-text-secondary text-center italic">
+            {progress.subMessage}
+          </p>
+        )}
+
+        {/* Tip for long operations */}
+        {(progress.stage === 'extracting_claims_chunk' || progress.stage === 'verifying_claims') && overallProgressPercentage < 75 && (progress.total > 10 || (progress.msRemaining || 0) > 60000) && (
+          <p className="text-xs text-text-muted text-center mt-3 max-w-sm">
+            Large document analysis can take a few minutes. Processing claims and sources in batches for efficiency...
+          </p>
         )}
       </div>
     </div>
