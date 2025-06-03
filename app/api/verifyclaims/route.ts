@@ -1,9 +1,8 @@
-// app/api/verifyclaims/route.ts
+﻿// app/api/verifyclaims/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { apiCache } from '@/lib/cacheManager';
 
-export const maxDuration = 180;
 
 const apiKey = "AIzaSyB-7iuE2qYR_1LK5DALUbBfwnxG7p9tIIs"; // Hardcoded API Key
 
@@ -250,3 +249,5 @@ Ensure all string values in JSON are properly escaped. The entire response MUST 
     );
   }
 }
+
+

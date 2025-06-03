@@ -1,11 +1,10 @@
-// app/api/extractclaims/route.ts
+﻿// app/api/extractclaims/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 // Corrected import: Import both apiCache (named) and cacheManager (default)
 import cacheManager, { apiCache } from '@/lib/cacheManager';
 import { ContentAnalyzer, ContentAnalysis, ContentChunk } from '@/lib/contentAnalyzer'; // Ensure ContentAnalyzer v2 is used
 
-export const maxDuration = 300; // 5 minutes
 
 // API Key - As per your request, this is hardcoded.
 // Remember the security implications of hardcoding API keys.
@@ -385,4 +384,6 @@ function removeDuplicateClaims(claims: Claim[]): Claim[] {
     return true;
   });
 }
+
+
 
