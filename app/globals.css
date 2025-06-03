@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* app/globals.css - Add these additional styles to your existing CSS file */
 
 /* Document Splitter specific styles */

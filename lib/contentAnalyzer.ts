@@ -33,8 +33,8 @@ export class ContentAnalyzer {
     // Let's set a practical limit slightly above that, e.g., 200,000 words.
     MAX_WORDS_PER_REQUEST: 7000, // Max words per individual LLM request for claim extraction (if chunking)
     MAX_CHARS_PER_REQUEST: 45000, // Corresponding character limit
-    MAX_WORDS_TOTAL: 200000, // Max total words for the entire document
-    MAX_CHUNKS: 30, // Max number of chunks (200,000 words / 7000 words/chunk approx 28 chunks)
+    MAX_WORDS_TOTAL: 250000, // Max total words for the entire document // MODIFIED
+    MAX_CHUNKS: 40, // Max number of chunks (250,000 words / 7000 words/chunk approx 36 chunks) // MODIFIED
     WORDS_PER_PAGE: 350, // Average words per page (can be adjusted)
     AVG_CLAIMS_PER_SENTENCE: 0.7, // Estimated claims per sentence (can be refined)
     PROCESSING_TIME_PER_CLAIM: 3, // Estimated seconds per claim for full verification (search + LLM)
